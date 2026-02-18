@@ -20,9 +20,7 @@ public class BarDataGroupViewTest {
 
     @Test
     public void testSVG() {
-        BarDataGroupView barview = new BarDataGroupView(createDataGroup(5, 10, 150), 30,
-                200,
-                100, new Point(500, 500));
+        BarDataGroupView barview = new BarDataGroupView(createDataGroup(5, 10, 150), 30, 200, 100, new Point(500, 500));
         SVGExportTestUtil.export(barview);
     }
 }

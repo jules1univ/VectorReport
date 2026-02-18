@@ -8,4 +8,9 @@
 /output
 
 # Java docs 
+<<<<<<< HEAD
 /doc
+=======
+/doc
+/.metals
+>>>>>>> 77865c5 (feat: BarDataGroupView(and Test) done)
