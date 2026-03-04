@@ -1,5 +1,7 @@
 package fr.univrennes.istic.l2gen.application;
 
+// TODO: remove this file
+
 import java.util.List;
 
 import fr.univrennes.istic.l2gen.geometry.Group;
@@ -11,7 +13,6 @@ import fr.univrennes.istic.l2gen.geometry.IShape;
  * repositionnées.
  */
 public final class Fractal {
-    // TODO: definir une methode general pour les classes de dessin du style
     // IDrawer, IDraw, ect...
 
     /**

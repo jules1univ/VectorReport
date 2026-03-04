@@ -1,5 +1,7 @@
 package fr.univrennes.istic.l2gen.application;
 
+// TODO: remove this file & add handlers for CLI/GUI
+
 import java.io.File;
 import java.util.List;
 
