@@ -6,7 +6,7 @@ public class BarDataGroupViewTest extends AbstractDataGroupViewTest<BarDataGroup
 
     @Override
     public BarDataGroupView create() {
-        return new BarDataGroupView(createDataGroup(5, 10, 150), 30, 200, 100, new Point(500, 500));
+        return new BarDataGroupView(createDataGroup(5, 10, 150), new Point(500, 500), 30, 200, 100);
     }
 
 }

@@ -6,7 +6,7 @@ public class PieDataGroupViewTest extends AbstractDataGroupViewTest<PieDataGroup
 
     @Override
     public PieDataGroupView create() {
-        return new PieDataGroupView(createDataGroup(5, 10, 150), 20, 80, new Point(500, 500));
+        return new PieDataGroupView(createDataGroup(5, 10, 150), new Point(500, 500), 20, 80);
     }
 
 }
