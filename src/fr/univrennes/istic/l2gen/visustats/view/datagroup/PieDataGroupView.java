@@ -76,7 +76,7 @@ public class PieDataGroupView extends AbstractDataGroupView {
             this.elements.add(pieView);
         }
 
-        Point titlePoint = new Point(center.getX(), center.getY() - this.radius * 2 / 3);
+        Point titlePoint = new Point(center.getX(), center.getY() - this.radius * 1.2f);
         this.elements.add(this.data.title().createTitle(titlePoint));
     }
 }
