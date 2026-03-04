@@ -2,6 +2,7 @@
 /bin
 /target
 /.metals
+*.db
 
 # Resultat de l'app
 /*.svg

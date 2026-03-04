@@ -27,11 +27,11 @@ public class ColumnsDataSetView extends AbstractDataSetView {
         this.maxHeight = 200;
     }
 
-    public ColumnsDataSetView(Point center, double barWidth, double spacing, double maxHeight) {
+    public ColumnsDataSetView(Point center, double spacing, double barWidth, double maxHeight) {
         super(center);
 
-        this.barWidth = barWidth;
         this.spacing = spacing;
+        this.barWidth = barWidth;
         this.maxHeight = maxHeight;
     }
 

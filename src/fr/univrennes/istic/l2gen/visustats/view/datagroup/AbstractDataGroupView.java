@@ -7,6 +7,7 @@ import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
 import fr.univrennes.istic.l2gen.visustats.data.DataGroup;
 import fr.univrennes.istic.l2gen.visustats.data.DataSet;
 import fr.univrennes.istic.l2gen.visustats.data.Label;
+import fr.univrennes.istic.l2gen.visustats.view.dataset.IDataSetView;
 
 @SVGTag("g")
 public abstract class AbstractDataGroupView extends Group implements IDataGroupView {
@@ -25,7 +26,40 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
         this.spacing = spacing;
     }
 
-    protected abstract void update();
+    protected abstract double getTotalHeight();
+
+    private double getTotalWidth() {
+        return this.getElementWidth() * this.data.size() + this.spacing * Math.max(0, this.data.size() - 1);
+    }
+
+    protected abstract double getElementWidth();
+
+    protected abstract IDataSetView createElement(Point position);
+
+    private Point getElementCenterAt(int index) {
+        double startX = center.getX() - (this.getTotalWidth() / 2);
+        double centerX = startX + index * (this.getElementWidth() + this.spacing) + this.getElementWidth() / 2;
+
+        return new Point(centerX, this.center.getY());
+    }
+
+    protected final void update() {
+        this.elements.clear();
+
+        if (this.data.size() == 0) {
+            return;
+        }
+
+        for (int i = 0; i < this.data.size(); i++) {
+            IDataSetView element = createElement(getElementCenterAt(i));
+            element.setData(this.data.get(i));
+
+            this.elements.add(element);
+        }
+
+        Point titlePoint = new Point(center.getX(), center.getY() - this.getTotalHeight() * 0.65);
+        this.elements.add(this.data.title().createTitle(titlePoint));
+    }
 
     @Override
     public final void setTitle(Label title) {

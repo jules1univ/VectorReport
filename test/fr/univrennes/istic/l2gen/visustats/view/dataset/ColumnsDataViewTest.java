@@ -6,7 +6,7 @@ public class ColumnsDataViewTest extends AbstractDataSetViewTest<ColumnsDataSetV
 
     @Override
     public ColumnsDataSetView create() {
-        return new ColumnsDataSetView(new Point(500, 500), 100, 10, 200);
+        return new ColumnsDataSetView(new Point(500, 500), 10, 100, 200);
     }
 
 }
