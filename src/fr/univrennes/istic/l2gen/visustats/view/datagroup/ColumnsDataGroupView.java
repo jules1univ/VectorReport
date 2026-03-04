@@ -1,20 +1,12 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import fr.univrennes.istic.l2gen.geometry.IShape;
 import fr.univrennes.istic.l2gen.geometry.Point;
-import fr.univrennes.istic.l2gen.geometry.base.Text;
-import fr.univrennes.istic.l2gen.svg.color.Color;
-import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
 import fr.univrennes.istic.l2gen.visustats.data.DataGroup;
 import fr.univrennes.istic.l2gen.visustats.data.DataSet;
-import fr.univrennes.istic.l2gen.visustats.data.Label;
 import fr.univrennes.istic.l2gen.visustats.view.dataset.ColumnsDataSetView;
-import fr.univrennes.istic.l2gen.visustats.view.dataset.IDataSetView;
 
 @SVGTag("g")
 public class ColumnsDataGroupView extends AbstractDataGroupView {
@@ -23,7 +15,7 @@ public class ColumnsDataGroupView extends AbstractDataGroupView {
     private double barWidth;
 
     public ColumnsDataGroupView(DataGroup data, Point center, double spacing, double barWidth, double maxHeight) {
-        super(data, spacing);
+        super(data, center, spacing);
         this.maxHeight = maxHeight;
         this.center = center;
         this.barWidth = barWidth;

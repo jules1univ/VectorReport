@@ -1,6 +1,7 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
 import fr.univrennes.istic.l2gen.geometry.Group;
+import fr.univrennes.istic.l2gen.geometry.Point;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
 import fr.univrennes.istic.l2gen.visustats.data.DataGroup;
@@ -15,8 +16,12 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
     @SVGField("data-spacing")
     protected double spacing;
 
-    public AbstractDataGroupView(DataGroup data, double spacing) {
+    @SVGField({ "data-center-x", "data-center-y" })
+    protected Point center;
+
+    public AbstractDataGroupView(DataGroup data, Point center, double spacing) {
         this.data = data;
+        this.center = center;
         this.spacing = spacing;
     }
 

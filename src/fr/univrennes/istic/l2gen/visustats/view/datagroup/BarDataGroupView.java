@@ -11,16 +11,17 @@ import fr.univrennes.istic.l2gen.visustats.view.dataset.BarDataSetView;
 @SVGTag("g")
 public class BarDataGroupView extends AbstractDataGroupView {
 
-    protected double maxHeight;
-    protected Point center;
+    private double maxHeight;
     private double barWidth;
 
     public BarDataGroupView(
             DataGroup data,
+            Point center,
             double spacing,
             double maxHeight,
-            double barWidth, Point center) {
-        super(data, spacing);
+            double barWidth) {
+        super(data, center, spacing);
+
         this.maxHeight = maxHeight;
         this.spacing = spacing;
         this.center = center;
@@ -53,6 +54,9 @@ public class BarDataGroupView extends AbstractDataGroupView {
 
             offsetX += elWidth + spacing;
         }
+
+        Point titlePoint = new Point(center.getX(), center.getY() - maxHeight * 2 / 3);
+        this.elements.add(this.data.title().createTitle(titlePoint));
     }
 
 }

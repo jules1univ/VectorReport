@@ -20,23 +20,20 @@ import fr.univrennes.istic.l2gen.visustats.view.dataset.PieDataSetView;
 @SVGTag("g")
 public class PieDataGroupView extends AbstractDataGroupView {
 
-    @SVGField("data-pie-radius")
-    protected double pieRadius;
-
-    protected Point centre;
+    @SVGField("data-radius")
+    protected double radius;
 
     /**
      * Constructeur.
      * 
-     * @param data      le DataGroup contenant les datasets à visualiser
-     * @param spacing   espacement horizontal entre les camemberts (en pixels)
-     * @param pieRadius le rayon de chaque camembert (en pixels)
-     * @param centre    le point centre autour duquel positionner les camemberts
+     * @param data    le DataGroup contenant les datasets à visualiser
+     * @param spacing espacement horizontal entre les camemberts (en pixels)
+     * @param radius  le rayon de chaque camembert (en pixels)
+     * @param centre  le point centre autour duquel positionner les camemberts
      */
-    public PieDataGroupView(DataGroup data, double spacing, double pieRadius, Point centre) {
-        super(data, spacing);
-        this.pieRadius = pieRadius;
-        this.centre = centre;
+    public PieDataGroupView(DataGroup data, Point center, double spacing, double radius) {
+        super(data, center, spacing);
+        this.radius = radius;
         this.update();
     }
 
@@ -61,22 +58,25 @@ public class PieDataGroupView extends AbstractDataGroupView {
         }
 
         // Étape 3 : Calculer les positions horizontales des camemberts
-        double pieWidth = 2.0 * this.pieRadius;
+        double pieWidth = 2.0 * this.radius;
         double totalPiesWidth = pieCount * pieWidth + (pieCount - 1) * this.spacing;
-        double startX = centre.getX() - totalPiesWidth / 2.0;
+        double startX = center.getX() - totalPiesWidth / 2.0;
 
         // Étape 4 : Pour chaque DataSet, créer un camembert et le positionner
         for (int i = 0; i < this.data.size(); i++) {
             // Position du centre du camembert courant
-            double centerX = startX + i * (pieWidth + this.spacing) + this.pieRadius;
-            Point pieCenter = new Point(centerX, centre.getY());
+            double centerX = startX + i * (pieWidth + this.spacing) + this.radius;
+            Point pieCenter = new Point(centerX, center.getY());
 
             // Créer une vue pie pour ce dataset
-            PieDataSetView pieView = new PieDataSetView(pieCenter, this.pieRadius);
+            PieDataSetView pieView = new PieDataSetView(pieCenter, this.radius);
             pieView.setData(this.data.get(i));
 
             // Ajouter cette vue au groupe principal
             this.elements.add(pieView);
         }
+
+        Point titlePoint = new Point(center.getX(), center.getY() - this.radius * 2 / 3);
+        this.elements.add(this.data.title().createTitle(titlePoint));
     }
 }
