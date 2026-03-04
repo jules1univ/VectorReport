@@ -1,6 +1,7 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
 import fr.univrennes.istic.l2gen.geometry.Group;
+import fr.univrennes.istic.l2gen.geometry.IShape;
 import fr.univrennes.istic.l2gen.geometry.Point;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
@@ -32,7 +33,11 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
         return this.getElementWidth() * this.data.size() + this.spacing * Math.max(0, this.data.size() - 1);
     }
 
+    protected abstract boolean isAxisEnabled();
+
     protected abstract double getElementWidth();
+
+    protected abstract IShape getAxisElement();
 
     protected abstract IDataSetView createElement(Point position);
 
@@ -55,6 +60,10 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
             element.setData(this.data.get(i));
 
             this.elements.add(element);
+        }
+
+        if (this.isAxisEnabled()) {
+            this.elements.add(this.getAxisElement());
         }
 
         Point titlePoint = new Point(center.getX(), center.getY() - this.getTotalHeight() * 0.65);

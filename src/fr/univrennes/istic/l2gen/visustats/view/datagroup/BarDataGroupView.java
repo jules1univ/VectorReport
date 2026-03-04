@@ -1,5 +1,6 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
+import fr.univrennes.istic.l2gen.geometry.IShape;
 import fr.univrennes.istic.l2gen.geometry.Point;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
@@ -46,6 +47,17 @@ public class BarDataGroupView extends AbstractDataGroupView {
     @Override
     protected BarDataSetView createElement(Point position) {
         return new BarDataSetView(position, this.barWidth, this.maxHeight);
+    }
+
+    @Override
+    protected boolean isAxisEnabled() {
+        return true;
+    }
+
+    @Override
+    protected IShape getAxisElement() {
+        // TODO: implement axis element
+        return null;
     }
 
 }

@@ -1,5 +1,6 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
+import fr.univrennes.istic.l2gen.geometry.IShape;
 import fr.univrennes.istic.l2gen.geometry.Point;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
@@ -51,5 +52,15 @@ public class PieDataGroupView extends AbstractDataGroupView {
     @Override
     protected IDataSetView createElement(Point position) {
         return new PieDataSetView(position, this.radius);
+    }
+
+    @Override
+    protected boolean isAxisEnabled() {
+        return false;
+    }
+
+    @Override
+    protected IShape getAxisElement() {
+        return null;
     }
 }

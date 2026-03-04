@@ -1,5 +1,6 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
+import fr.univrennes.istic.l2gen.geometry.IShape;
 import fr.univrennes.istic.l2gen.geometry.Point;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
@@ -44,4 +45,14 @@ public class ColumnsDataGroupView extends AbstractDataGroupView {
         return new ColumnsDataSetView(position, this.innerSpacing, this.barWidth, this.maxHeight);
     }
 
+    @Override
+    protected boolean isAxisEnabled() {
+        return true;
+    }
+
+    @Override
+    protected IShape getAxisElement() {
+        // TODO: implement axis element
+        return null;
+    }
 }
