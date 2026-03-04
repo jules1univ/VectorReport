@@ -65,9 +65,10 @@ public class TriangleTest extends AbstractShapeTest<Triangle> {
     @Test
     @Override
     public void testDescription() {
-        Triangle text = create();
-        String desc = text.getDescription(1);
-        assert desc.contains("Triangle");
+        Triangle triangle = create();
+        String expected = " TrianglePOINTS= 480.0,480.0 520.0,480.0 500.0,540.0";
+        String desc = triangle.getDescription(1);
+        assertEquals(expected, desc);
     }
 
     @Test
