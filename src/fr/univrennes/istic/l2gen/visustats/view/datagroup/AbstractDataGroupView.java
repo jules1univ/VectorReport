@@ -27,22 +27,22 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
         this.spacing = spacing;
     }
 
-    protected abstract double getTotalHeight();
+    protected abstract double getTotalElementsHeight();
 
-    private double getTotalWidth() {
+    protected double getTotalElementsWidth() {
         return this.getElementWidth() * this.data.size() + this.spacing * Math.max(0, this.data.size() - 1);
     }
 
     protected abstract boolean isAxisEnabled();
 
-    protected abstract double getElementWidth();
-
     protected abstract IShape getAxisElement();
+
+    protected abstract double getElementWidth();
 
     protected abstract IDataSetView createElement(Point position);
 
     private Point getElementCenterAt(int index) {
-        double startX = center.getX() - (this.getTotalWidth() / 2);
+        double startX = center.getX() - (this.getTotalElementsWidth() / 2);
         double centerX = startX + index * (this.getElementWidth() + this.spacing) + this.getElementWidth() / 2;
 
         return new Point(centerX, this.center.getY());
@@ -66,7 +66,7 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
             this.elements.add(this.getAxisElement());
         }
 
-        Point titlePoint = new Point(center.getX(), center.getY() - this.getTotalHeight() * 0.65);
+        Point titlePoint = new Point(center.getX(), center.getY() - this.getTotalElementsHeight() * 0.65);
         this.elements.add(this.data.title().createTitle(titlePoint));
     }
 

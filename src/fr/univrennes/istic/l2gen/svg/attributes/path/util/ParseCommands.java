@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.svg.attributes.path;
+package fr.univrennes.istic.l2gen.svg.attributes.path.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,21 +16,8 @@ import fr.univrennes.istic.l2gen.svg.attributes.path.commands.MoveCommandType;
 import fr.univrennes.istic.l2gen.svg.attributes.path.commands.QuadBezierCommand;
 import fr.univrennes.istic.l2gen.svg.attributes.path.commands.QuadBezierCommandType;
 
-/**
- * Classe utilitaire pour analyser les commandes SVG path d'une chaîne.
- * Convertit une chaîne de commandes SVG (ex: "M 10 10 L 20 20") en une liste
- * d'objets de commande.
- */
 public final class ParseCommands {
-    /**
-     * Analyse une chaîne de commandes SVG path et retourne une liste de commandes
-     * parsées.
-     * Supporte les commandes standards SVG : M, m, L, l, H, h, V, v, C, c, S, s, Q,
-     * q, T, t, A, a, Z, z.
-     * 
-     * @param raw la chaîne de commandes SVG path (ex: "M 10 10 L 20 20 Z")
-     * @return une liste de commandes parsées implémentant IPathCommand
-     */
+
     public static List<IPathCommand> parse(String raw) {
         Pattern tokenPattern = Pattern.compile(
                 "[MmLlHhVvCcSsQqTtAaZz]|[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?");
@@ -225,14 +212,6 @@ public final class ParseCommands {
         return commands;
     }
 
-    /**
-     * Analyse un double à partir d'une liste de tokens.
-     * Retourne 0.0 si l'index est invalide ou si le parsing échoue.
-     * 
-     * @param tokens la liste de tokens
-     * @param index  l'index du token à analyser
-     * @return la valeur double parsée, ou 0.0 en cas d'erreur
-     */
     private static double parseDouble(List<String> tokens, int index) {
         if (index >= tokens.size())
             return 0.0;
@@ -243,24 +222,10 @@ public final class ParseCommands {
         }
     }
 
-    /**
-     * Analyse un flag booléen à partir d'une liste de tokens.
-     * Analyse le token comme un double : 0.0 = false, non-zéro = true.
-     * 
-     * @param tokens la liste de tokens
-     * @param index  l'index du token à analyser
-     * @return true si la valeur est non-zéro, false sinon
-     */
     private static boolean parseFlag(List<String> tokens, int index) {
         return parseDouble(tokens, index) != 0.0;
     }
 
-    /**
-     * Vérifie si une chaîne représente un nombre (entier ou décimal).
-     * 
-     * @param token la chaîne à vérifier
-     * @return true si le token est un nombre valide, false sinon
-     */
     private static boolean isNumber(String token) {
         return token.matches("[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?");
     }

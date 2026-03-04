@@ -40,7 +40,7 @@ public class PieDataGroupView extends AbstractDataGroupView {
     }
 
     @Override
-    protected double getTotalHeight() {
+    protected double getTotalElementsHeight() {
         return this.radius * 2;
     }
 

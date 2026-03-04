@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.svg.attributes.path;
+package fr.univrennes.istic.l2gen.svg.attributes.path.util;
 
 /**
  * Représente une boîte englobante (bounding box) d'une forme.

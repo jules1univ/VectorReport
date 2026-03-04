@@ -1,6 +1,7 @@
 package fr.univrennes.istic.l2gen.geometry;
 
 import fr.univrennes.istic.l2gen.svg.attributes.path.SVGPath;
+import fr.univrennes.istic.l2gen.svg.attributes.path.util.BoundingBox;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
 
@@ -31,10 +32,11 @@ public final class Path extends AbstractShape {
      * @param path le chemin SVG (ne doit pas être null)
      * @throws IllegalArgumentException si le chemin est null
      */
-    public Path(SVGPath path) {
+    public Path(Point position, SVGPath path) {
         if (path == null) {
             throw new IllegalArgumentException("SVGPath cannot be null");
         }
+        this.position = position;
         this.path = path;
     }
 
@@ -74,9 +76,14 @@ public final class Path extends AbstractShape {
      */
     @Override
     public Point getCenter() {
+        if (!this.path.hasContent()) {
+            return new Point(position.getX(), position.getY());
+        }
+
+        BoundingBox box = this.path.getBoundingBox();
         return new Point(
-                position.getX() + this.path.getBoundingBox().getWidth() / 2,
-                position.getY() + this.path.getBoundingBox().getHeight() / 2);
+                position.getX() + box.minX() + box.getWidth() / 2.0,
+                position.getY() + box.minY() + box.getHeight() / 2.0);
     }
 
     /**
@@ -134,7 +141,7 @@ public final class Path extends AbstractShape {
      */
     @Override
     public IShape copy() {
-        return new Path(this.path);
+        return new Path((Point) this.position.copy(), this.path);
     }
 
 }
