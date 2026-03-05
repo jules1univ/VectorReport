@@ -1,18 +1,16 @@
 package fr.univrennes.istic.l2gen.visustats.view.datagroup;
 
-import fr.univrennes.istic.l2gen.geometry.Group;
 import fr.univrennes.istic.l2gen.geometry.IShape;
-import fr.univrennes.istic.l2gen.geometry.Path;
 import fr.univrennes.istic.l2gen.geometry.Point;
-import fr.univrennes.istic.l2gen.geometry.base.Triangle;
-import fr.univrennes.istic.l2gen.svg.color.Color;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
 import fr.univrennes.istic.l2gen.visustats.data.DataGroup;
+import fr.univrennes.istic.l2gen.visustats.view.datagroup.axis.DataAxisView;
 import fr.univrennes.istic.l2gen.visustats.view.dataset.BarDataSetView;
 
 @SVGTag("g")
 public class BarDataGroupView extends AbstractDataGroupView {
+        private static final int DEFAULT_AXIS_STEP_COUNT = 5;
 
         @SVGField("data-maxheight")
         private double maxHeight;
@@ -60,79 +58,8 @@ public class BarDataGroupView extends AbstractDataGroupView {
 
         @Override
         protected IShape getAxisElement() {
-                Group axisGroup = new Group();
-
-                double padding = this.spacing * 2;
-                double triangleSize = 5;
-
-                Path horizontal = new Path();
-                horizontal
-                                .getStyle()
-                                .strokeColor(Color.BLACK)
-                                .strokeWidth(2);
-
-                horizontal
-                                .draw()
-                                .move(
-                                                this.center.getX() - (this.getTotalElementsWidth() / 2),
-                                                this.center.getY() + (this.getTotalElementsHeight() / 2),
-                                                false)
-                                .line(
-                                                this.center.getX() + (this.getTotalElementsWidth() / 2) + padding
-                                                                - triangleSize,
-                                                this.center.getY() + (this.getTotalElementsHeight() / 2),
-                                                false);
-                axisGroup.add(new Triangle(
-                                new Point(
-                                                this.center.getX() + (this.getTotalElementsWidth() / 2) + padding
-                                                                - triangleSize,
-                                                this.center.getY() + (this.getTotalElementsHeight() / 2)
-                                                                - triangleSize),
-                                new Point(
-                                                this.center.getX() + (this.getTotalElementsWidth() / 2) + padding
-                                                                - triangleSize,
-                                                this.center.getY() + (this.getTotalElementsHeight() / 2)
-                                                                + triangleSize),
-                                new Point(
-                                                this.center.getX() + (this.getTotalElementsWidth() / 2) + padding,
-                                                this.center.getY() + (this.getTotalElementsHeight() / 2))));
-
-                axisGroup.add(horizontal);
-
-                Path vertical = new Path();
-                vertical
-                                .getStyle()
-                                .strokeColor(Color.BLACK)
-                                .strokeWidth(2);
-                vertical.draw()
-                                .move(
-                                                this.center.getX() - (this.getTotalElementsWidth() / 2),
-                                                this.center.getY() + (this.getTotalElementsHeight() / 2),
-                                                false)
-                                .line(
-                                                this.center.getX() - (this.getTotalElementsWidth() / 2),
-                                                this.center.getY() - (this.getTotalElementsHeight() / 2) - padding,
-                                                false);
-
-                axisGroup.add(new Triangle(
-                                new Point(
-                                                this.center.getX() - (this.getTotalElementsWidth() / 2) - triangleSize,
-                                                this.center.getY() - (this.getTotalElementsHeight() / 2)
-                                                                - padding),
-
-                                new Point(
-                                                this.center.getX() - (this.getTotalElementsWidth() / 2) + triangleSize,
-                                                this.center.getY() - (this.getTotalElementsHeight() / 2)
-                                                                - padding),
-
-                                new Point(
-                                                this.center.getX() - (this.getTotalElementsWidth() / 2),
-                                                this.center.getY() - (this.getTotalElementsHeight() / 2) - padding
-                                                                - triangleSize)));
-
-                axisGroup.add(vertical);
-
-                return axisGroup;
+                return new DataAxisView(this.center, this.getTotalElementsWidth(), this.getTotalElementsHeight(),
+                                this.spacing, this.data.max(), DEFAULT_AXIS_STEP_COUNT);
         }
 
 }

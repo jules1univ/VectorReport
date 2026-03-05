@@ -11,6 +11,10 @@ package fr.univrennes.istic.l2gen.svg.attributes.path.commands;
  */
 public record MoveCommand(Double x, Double y, MoveCommandType type) implements IPathCommand {
 
+    public MoveCommand(double value, MoveCommandType type) {
+        this(value, null, type);
+    }
+
     /**
      * Retourne la représentation SVG de cette commande de déplacement.
      * 
@@ -38,6 +42,14 @@ public record MoveCommand(Double x, Double y, MoveCommandType type) implements I
             sb.append(",").append(y);
         }
         return sb.toString();
+    }
+
+    @Override
+    public IPathCommand translate(double dx, double dy) {
+        return new MoveCommand(
+                this.x != null ? this.x + dx : null,
+                this.y != null ? this.y + dy : null,
+                this.type);
     }
 
 }

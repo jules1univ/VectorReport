@@ -41,4 +41,16 @@ public record CubicBezierCommand(Double x1, Double y1, Double x2, Double y2, Dou
         return sb.toString();
     }
 
+    @Override
+    public IPathCommand translate(double dx, double dy) {
+        return new CubicBezierCommand(
+                this.x1 != null ? this.x1 + dx : null,
+                this.y1 != null ? this.y1 + dy : null,
+                this.x2 + dx,
+                this.y2 + dy,
+                this.x + dx,
+                this.y + dy,
+                this.type);
+    }
+
 }

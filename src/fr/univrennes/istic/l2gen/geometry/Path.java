@@ -16,9 +16,6 @@ public final class Path extends AbstractShape {
     @SVGField("d")
     private SVGPath path;
 
-    @SVGField({ "x", "y" })
-    private Point position = new Point(0, 0);
-
     /**
      * Constructeur par défaut. Crée un chemin vide.
      */
@@ -26,17 +23,10 @@ public final class Path extends AbstractShape {
         this.path = new SVGPath();
     }
 
-    /**
-     * Constructeur avec un chemin SVG spécifié.
-     * 
-     * @param path le chemin SVG (ne doit pas être null)
-     * @throws IllegalArgumentException si le chemin est null
-     */
-    public Path(Point position, SVGPath path) {
+    public Path(SVGPath path) {
         if (path == null) {
             throw new IllegalArgumentException("SVGPath cannot be null");
         }
-        this.position = position;
         this.path = path;
     }
 
@@ -77,13 +67,12 @@ public final class Path extends AbstractShape {
     @Override
     public Point getCenter() {
         if (!this.path.hasContent()) {
-            return new Point(position.getX(), position.getY());
+            return new Point(0, 0);
         }
 
         BoundingBox box = this.path.getBoundingBox();
-        return new Point(
-                position.getX() + box.minX() + box.getWidth() / 2.0,
-                position.getY() + box.minY() + box.getHeight() / 2.0);
+        return new Point(box.minX() + box.getWidth() / 2.0,
+                box.minY() + box.getHeight() / 2.0);
     }
 
     /**
@@ -110,7 +99,14 @@ public final class Path extends AbstractShape {
      */
     @Override
     public void move(double dx, double dy) {
-        this.position.add(dx, dy);
+        this.path.translate(dx, dy);
+    }
+
+    public void moveCenter(Point center) {
+        Point currentCenter = this.getCenter();
+        double dx = center.getX() - currentCenter.getX();
+        double dy = center.getY() - currentCenter.getY();
+        this.move(dx, dy);
     }
 
     /**
@@ -141,7 +137,7 @@ public final class Path extends AbstractShape {
      */
     @Override
     public IShape copy() {
-        return new Path((Point) this.position.copy(), this.path);
+        return new Path(this.path);
     }
 
 }

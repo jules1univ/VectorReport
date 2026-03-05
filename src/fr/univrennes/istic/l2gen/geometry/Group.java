@@ -152,9 +152,7 @@ public class Group extends AbstractShape {
      */
     @Override
     public void resize(double px, double py) {
-        for (IShape shape : elements) {
-            shape.resize(px, py);
-        }
+        this.transform.scale(px, py);
     }
 
     /**
@@ -164,9 +162,7 @@ public class Group extends AbstractShape {
      */
     @Override
     public void rotate(double deg) {
-        for (IShape shape : elements) {
-            shape.rotate(deg);
-        }
+        this.transform.rotate(deg);
     }
 
     /**

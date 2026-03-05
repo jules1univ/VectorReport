@@ -16,4 +16,9 @@ public record CloseCommand() implements IPathCommand {
         return "Z";
     }
 
+    @Override
+    public IPathCommand translate(double dx, double dy) {
+        return this;
+    }
+
 }

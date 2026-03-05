@@ -6,10 +6,12 @@ package fr.univrennes.istic.l2gen.svg.attributes.path.commands;
  */
 public interface IPathCommand {
 
+    public IPathCommand translate(double dx, double dy);
+
     /**
      * Retourne la représentation en chaîne SVG de cette commande.
      * 
      * @return la commande au format SVG
      */
-    String getValue();
+    public String getValue();
 }

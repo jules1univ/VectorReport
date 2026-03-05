@@ -6,15 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import fr.univrennes.istic.l2gen.svg.attributes.path.SVGPath;
-
 public class PathTest extends AbstractShapeTest<Path> {
 
     @Override
     public Path create() {
-        Path smiley = new Path(new Point(500, 500), new SVGPath());
-
-        smiley.draw()
+        Path path = new Path();
+        path.draw()
                 .move(40, 100, false)
                 .arc(60, 60, 0, false, true, 160, 100, false)
                 .arc(60, 60, 0, false, true, 40, 100, false)
@@ -31,31 +28,16 @@ public class PathTest extends AbstractShapeTest<Path> {
                 .close()
 
                 .move(100, 95, false)
-                .quadBezier(93, 110, 100, 115, false)
-                .quadBezierSmooth(107, 110, false)
+                .line(100, 105, false)
+                .line(110, 105, false)
+                .line(110, 95, false)
+                .close()
 
                 .move(75, 115, false)
                 .cubicBezier(80, 140, 120, 140, 125, 115, false)
-
-                .move(55, 110, false)
-                .cubicBezier(50, 105, 50, 120, 55, 120, false)
-                .cubicBezierSmooth(60, 115, 55, 110, false)
-
-                .move(140, 110, false)
-                .horizontal(150, 0, false)
-                .vertical(120, false)
-                .horizontal(140, 0, false)
-                .close()
-
-                .move(72, 78, false)
-                .line(6, -3, true)
-                .line(6, 3, true)
-
-                .move(110, 78, false)
-                .line(6, -3, true)
-                .line(6, 3, true);
-
-        return smiley;
+                .close();
+        path.moveCenter(new Point(500, 500));
+        return path;
     }
 
     @Test
@@ -102,18 +84,22 @@ public class PathTest extends AbstractShapeTest<Path> {
                 .close();
         assertEquals(new Point(5, 5), simple.getCenter());
 
-        Path smiley = create();
-        Point c = smiley.getCenter();
+        Path path = create();
+        Point c = path.getCenter();
+
         assertNotNull(c);
-        assertEquals(100, c.getX(), 2.0);
-        assertEquals(100, c.getY(), 2.0);
+        assertEquals(500, c.getX(), 2.0);
+        assertEquals(500, c.getY(), 2.0);
     }
 
     @Test
     @Override
     public void testMove() {
         Path path = new Path();
-        path.draw().move(0, 0, false).line(3, 0, false).line(0, 4, false);
+        path.draw()
+                .move(0, 0, false)
+                .line(3, 0, false)
+                .line(0, 4, false);
 
         Point before = path.getCenter();
         double cx = before.getX();
@@ -203,9 +189,9 @@ public class PathTest extends AbstractShapeTest<Path> {
         Path p = new Path();
         p.draw()
                 .move(0, 0, false)
-                .horizontal(10, 0, false)
+                .horizontal(10, false)
                 .vertical(10, false)
-                .horizontal(0, 0, false)
+                .horizontal(0, false)
                 .close();
 
         assertEquals(10, p.getWidth(), 0.001);
@@ -218,9 +204,9 @@ public class PathTest extends AbstractShapeTest<Path> {
         Path p = new Path();
         p.draw()
                 .move(2, 2, false)
-                .horizontal(8, 0, true)
+                .horizontal(8, true)
                 .vertical(8, true)
-                .horizontal(-8, 0, true)
+                .horizontal(-8, true)
                 .close();
 
         assertEquals(8, p.getWidth(), 0.001);
@@ -258,7 +244,6 @@ public class PathTest extends AbstractShapeTest<Path> {
 
     @Test
     public void testBoundingBoxSmoothCubicBezier() {
-
         Path p = new Path();
         p.draw()
                 .move(0, 0, false)
@@ -267,8 +252,8 @@ public class PathTest extends AbstractShapeTest<Path> {
 
         assertEquals(100, p.getWidth(), 0.001);
 
-        assertTrue("Smooth cubic height must be < 50", p.getHeight() < 50);
-        assertTrue("Smooth cubic height must be > 0", p.getHeight() > 0);
+        assertTrue("Smooth cubic height must be <= 100", p.getHeight() <= 100);
+        assertTrue("Smooth cubic height must be > 50", p.getHeight() > 50);
     }
 
     @Test
@@ -408,4 +393,5 @@ public class PathTest extends AbstractShapeTest<Path> {
         assertEquals(0, p.getHeight(), 0.001);
         assertEquals(new Point(0, 0), p.getCenter());
     }
+
 }

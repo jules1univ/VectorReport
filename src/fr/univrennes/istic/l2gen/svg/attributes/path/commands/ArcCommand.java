@@ -35,4 +35,11 @@ public record ArcCommand(double rx, double ry, double xAxisRotation, boolean lar
                 .append(x).append(",").append(y);
         return sb.toString();
     }
+
+    @Override
+    public IPathCommand translate(double dx, double dy) {
+        return new ArcCommand(this.rx, this.ry, this.xAxisRotation, this.largeArcFlag, this.sweepFlag, this.x + dx,
+                this.y + dy,
+                this.type);
+    }
 }

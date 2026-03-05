@@ -2,6 +2,7 @@ package fr.univrennes.istic.l2gen.svg.attributes.path;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import fr.univrennes.istic.l2gen.svg.attributes.path.commands.ArcCommand;
 import fr.univrennes.istic.l2gen.svg.attributes.path.commands.ArcCommandType;
@@ -47,6 +48,11 @@ public class SVGPath implements ISVGAttribute {
         refreshBox();
     }
 
+    public void translate(double dx, double dy) {
+        this.commands = this.commands.stream().map(cmd -> cmd.translate(dx, dy)).collect(Collectors.toList());
+        refreshBox();
+    }
+
     /**
      * Ferme le chemin avec une commande de fermeture.
      */
@@ -68,16 +74,16 @@ public class SVGPath implements ISVGAttribute {
         return this;
     }
 
-    public SVGPath horizontal(double x, double y, boolean relative) {
+    public SVGPath horizontal(double value, boolean relative) {
         this.commands.add(
-                new MoveCommand(x, null, relative ? MoveCommandType.HORIZONTAL_RELATIVE : MoveCommandType.HORIZONTAL));
+                new MoveCommand(value, relative ? MoveCommandType.HORIZONTAL_RELATIVE : MoveCommandType.HORIZONTAL));
         refreshBox();
         return this;
     }
 
-    public SVGPath vertical(double y, boolean relative) {
+    public SVGPath vertical(double value, boolean relative) {
         this.commands
-                .add(new MoveCommand(null, y, relative ? MoveCommandType.VERTICAL_RELATIVE : MoveCommandType.VERTICAL));
+                .add(new MoveCommand(value, relative ? MoveCommandType.VERTICAL_RELATIVE : MoveCommandType.VERTICAL));
         refreshBox();
         return this;
     }
@@ -139,6 +145,10 @@ public class SVGPath implements ISVGAttribute {
             this.isDirty = false;
         }
         return this.cachedBox;
+    }
+
+    public List<IPathCommand> getDrawCommands() {
+        return this.commands;
     }
 
     @Override

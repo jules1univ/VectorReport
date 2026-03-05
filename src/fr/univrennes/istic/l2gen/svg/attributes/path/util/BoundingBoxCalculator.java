@@ -84,6 +84,7 @@ public class BoundingBoxCalculator {
             double x2, double y2,
             double minX, double minY,
             double maxX, double maxY) {
+
         if (rx == 0 || ry == 0) {
             minX = Math.min(minX, x2);
             maxX = Math.max(maxX, x2);
@@ -238,10 +239,10 @@ public class BoundingBoxCalculator {
                         currentX += x;
                     }
                     case VERTICAL -> {
-                        currentY = y;
+                        currentY = move.x();
                     }
                     case VERTICAL_RELATIVE -> {
-                        currentY += y;
+                        currentY += move.x();
                     }
                 }
 

@@ -82,23 +82,23 @@ public final class ParseCommands {
                         break;
                     }
                     case 'H': {
-                        double x = parseDouble(tokens, i++);
-                        commands.add(new MoveCommand(x, null, MoveCommandType.HORIZONTAL));
+                        double value = parseDouble(tokens, i++);
+                        commands.add(new MoveCommand(value, MoveCommandType.HORIZONTAL));
                         break;
                     }
                     case 'h': {
-                        double x = parseDouble(tokens, i++);
-                        commands.add(new MoveCommand(x, null, MoveCommandType.HORIZONTAL_RELATIVE));
+                        double value = parseDouble(tokens, i++);
+                        commands.add(new MoveCommand(value, MoveCommandType.HORIZONTAL_RELATIVE));
                         break;
                     }
                     case 'V': {
-                        double y = parseDouble(tokens, i++);
-                        commands.add(new MoveCommand(null, y, MoveCommandType.VERTICAL));
+                        double value = parseDouble(tokens, i++);
+                        commands.add(new MoveCommand(value, MoveCommandType.VERTICAL));
                         break;
                     }
                     case 'v': {
-                        double y = parseDouble(tokens, i++);
-                        commands.add(new MoveCommand(null, y, MoveCommandType.VERTICAL_RELATIVE));
+                        double value = parseDouble(tokens, i++);
+                        commands.add(new MoveCommand(value, MoveCommandType.VERTICAL_RELATIVE));
                         break;
                     }
                     case 'C': {
