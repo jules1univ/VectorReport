@@ -99,10 +99,6 @@ public class TestCSVParser {
         assertEquals(0, table.rows().size());
     }
 
-    // -------------------------------------------------------------------------
-    // Quoted fields
-    // -------------------------------------------------------------------------
-
     @Test
     public void testQuotedField() throws CSVParseException {
         CSVTable table = parser.parse("\"hello world\",b");
@@ -133,10 +129,6 @@ public class TestCSVParser {
         assertThrows(CSVParseException.class, () -> parser.parse("ab\"c,d"));
     }
 
-    // -------------------------------------------------------------------------
-    // Whitespace trimming
-    // -------------------------------------------------------------------------
-
     @Test
     public void testTrimWhitespaceEnabledByDefault() throws CSVParseException {
         CSVTable table = parser.parse("  a  ,  b  ,  c  ");
@@ -153,13 +145,9 @@ public class TestCSVParser {
         assertEquals("  b  ", table.rows().get(0).cell(1));
     }
 
-    // -------------------------------------------------------------------------
-    // Custom delimiters
-    // -------------------------------------------------------------------------
-
     @Test
     public void testSemicolonDelimiter() throws CSVParseException {
-        CSVTable table = new CSVParser().withDelimiter(';').parse("a;b;c");
+        CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -168,7 +156,7 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimiter() throws CSVParseException {
-        CSVTable table = new CSVParser().withDelimiter('\t').parse("a\tb\tc");
+        CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -186,18 +174,14 @@ public class TestCSVParser {
 
     @Test
     public void testCustomQuoteChar() throws CSVParseException {
-        CSVTable table = new CSVParser().withQuoteChar('\'').parse("'a,b',c");
+        CSVTable table = new CSVParser(',', '\'', false, true).parse("'a,b',c");
         assertEquals("a,b", table.rows().get(0).cell(0));
         assertEquals("c", table.rows().get(0).cell(1));
     }
 
-    // -------------------------------------------------------------------------
-    // Static factory methods
-    // -------------------------------------------------------------------------
-
     @Test
     public void testSemicolonDelimitedFactory() throws CSVParseException {
-        CSVTable table = CSVParser.semicolonDelimited().parse("a;b;c");
+        CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
         assertEquals("a", table.rows().get(0).cell(0));
         assertEquals("b", table.rows().get(0).cell(1));
         assertEquals("c", table.rows().get(0).cell(2));
@@ -205,7 +189,7 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimitedFactory() throws CSVParseException {
-        CSVTable table = CSVParser.tabDelimited().parse("a\tb\tc");
+        CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
         assertEquals("a", table.rows().get(0).cell(0));
     }
 
