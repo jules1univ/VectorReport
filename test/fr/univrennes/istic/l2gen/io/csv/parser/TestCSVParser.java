@@ -147,11 +147,7 @@ public class TestCSVParser {
 
     @Test
     public void testSemicolonDelimiter() throws CSVParseException {
-<<<<<<< HEAD
-        CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
-=======
         CSVTable table = new CSVParser(';', '"', true, true).parse("a;b;c");
->>>>>>> 8faa665 (add cli for vector report)
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -160,11 +156,7 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimiter() throws CSVParseException {
-<<<<<<< HEAD
-        CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
-=======
         CSVTable table = new CSVParser('\t', '"', true, true).parse("a\tb\tc");
->>>>>>> 8faa665 (add cli for vector report)
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -182,22 +174,15 @@ public class TestCSVParser {
 
     @Test
     public void testCustomQuoteChar() throws CSVParseException {
-<<<<<<< HEAD
+
         CSVTable table = new CSVParser(',', '\'', false, true).parse("'a,b',c");
-=======
-        CSVTable table = new CSVParser('|', '\'', false, true).parse("'a,b',c");
->>>>>>> 8faa665 (add cli for vector report)
         assertEquals("a,b", table.rows().get(0).cell(0));
         assertEquals("c", table.rows().get(0).cell(1));
     }
 
     @Test
     public void testSemicolonDelimitedFactory() throws CSVParseException {
-<<<<<<< HEAD
         CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
-=======
-        CSVTable table = new CSVParser(',', '"', false, true).parse("a;b;c");
->>>>>>> 8faa665 (add cli for vector report)
         assertEquals("a", table.rows().get(0).cell(0));
         assertEquals("b", table.rows().get(0).cell(1));
         assertEquals("c", table.rows().get(0).cell(2));
@@ -205,11 +190,7 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimitedFactory() throws CSVParseException {
-<<<<<<< HEAD
         CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
-=======
-        CSVTable table = new CSVParser('\t', '"', true, true).parse("a\tb\tc");
->>>>>>> 8faa665 (add cli for vector report)
         assertEquals("a", table.rows().get(0).cell(0));
     }
 
