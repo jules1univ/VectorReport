@@ -16,6 +16,13 @@ public final class Color {
     public static final Color GREEN = new Color("#00ff00");
     public static final Color BLUE = new Color("#0000ff");
 
+    public static final Color ORANGE = new Color("#ffa500");
+    public static final Color PURPLE = new Color("#800080");
+    public static final Color CYAN = new Color("#00ffff");
+    public static final Color MAGENTA = new Color("#ff00ff");
+    public static final Color YELLOW = new Color("#ffff00");
+    public static final Color GRAY = new Color("#808080");
+
     private final String hex;
 
     /**

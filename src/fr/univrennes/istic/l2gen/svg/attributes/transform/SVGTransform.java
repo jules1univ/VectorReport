@@ -256,4 +256,19 @@ public final class SVGTransform implements ISVGAttribute {
         });
         return sb.toString().trim();
     }
+
+    public SVGTransform copy() {
+        SVGTransform copy = new SVGTransform();
+        copy.rotate = this.rotate;
+        copy.rotatePointX = this.rotatePointX;
+        copy.rotatePointY = this.rotatePointY;
+        copy.translateX = this.translateX;
+        copy.translateY = this.translateY;
+        copy.scaleX = this.scaleX;
+        copy.scaleY = this.scaleY;
+        copy.skewX = this.skewX;
+        copy.skewY = this.skewY;
+        copy.matrix = this.matrix;
+        return copy;
+    }
 }

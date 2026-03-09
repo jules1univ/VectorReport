@@ -84,7 +84,7 @@ public class TestCSVParser {
 
     @Test
     public void testWithHeaders() throws CSVParseException {
-        CSVTable table = new CSVParser().withHeaders(true).parse("name,age\nAlice,30");
+        CSVTable table = new CSVParser(',', '"', true, true).parse("name,age\nAlice,30");
         assertNotNull(table.header());
         assertEquals("name", table.header().cell(0));
         assertEquals("age", table.header().cell(1));
@@ -94,7 +94,7 @@ public class TestCSVParser {
 
     @Test
     public void testHeaderOnlyNoDataRows() throws CSVParseException {
-        CSVTable table = new CSVParser().withHeaders(true).parse("name,age");
+        CSVTable table = new CSVParser('"', '"', true, true).parse("name,age");
         assertNotNull(table.header());
         assertEquals(0, table.rows().size());
     }
@@ -140,14 +140,18 @@ public class TestCSVParser {
 
     @Test
     public void testTrimWhitespaceDisabled() throws CSVParseException {
-        CSVTable table = new CSVParser().withTrimWhitespace(false).parse("  a  ,  b  ");
+        CSVTable table = new CSVParser(',', '"', false, false).parse("  a  ,  b  ");
         assertEquals("  a  ", table.rows().get(0).cell(0));
         assertEquals("  b  ", table.rows().get(0).cell(1));
     }
 
     @Test
     public void testSemicolonDelimiter() throws CSVParseException {
+<<<<<<< HEAD
         CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
+=======
+        CSVTable table = new CSVParser(';', '"', true, true).parse("a;b;c");
+>>>>>>> 8faa665 (add cli for vector report)
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -156,7 +160,11 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimiter() throws CSVParseException {
+<<<<<<< HEAD
         CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
+=======
+        CSVTable table = new CSVParser('\t', '"', true, true).parse("a\tb\tc");
+>>>>>>> 8faa665 (add cli for vector report)
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -165,7 +173,7 @@ public class TestCSVParser {
 
     @Test
     public void testPipeDelimiter() throws CSVParseException {
-        CSVTable table = new CSVParser().withDelimiter('|').parse("a|b|c");
+        CSVTable table = new CSVParser('|', '"', false, true).parse("a|b|c");
         CSVRow row = table.rows().get(0);
         assertEquals("a", row.cell(0));
         assertEquals("b", row.cell(1));
@@ -174,14 +182,22 @@ public class TestCSVParser {
 
     @Test
     public void testCustomQuoteChar() throws CSVParseException {
+<<<<<<< HEAD
         CSVTable table = new CSVParser(',', '\'', false, true).parse("'a,b',c");
+=======
+        CSVTable table = new CSVParser('|', '\'', false, true).parse("'a,b',c");
+>>>>>>> 8faa665 (add cli for vector report)
         assertEquals("a,b", table.rows().get(0).cell(0));
         assertEquals("c", table.rows().get(0).cell(1));
     }
 
     @Test
     public void testSemicolonDelimitedFactory() throws CSVParseException {
+<<<<<<< HEAD
         CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
+=======
+        CSVTable table = new CSVParser(',', '"', false, true).parse("a;b;c");
+>>>>>>> 8faa665 (add cli for vector report)
         assertEquals("a", table.rows().get(0).cell(0));
         assertEquals("b", table.rows().get(0).cell(1));
         assertEquals("c", table.rows().get(0).cell(2));
@@ -189,13 +205,17 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimitedFactory() throws CSVParseException {
+<<<<<<< HEAD
         CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
+=======
+        CSVTable table = new CSVParser('\t', '"', true, true).parse("a\tb\tc");
+>>>>>>> 8faa665 (add cli for vector report)
         assertEquals("a", table.rows().get(0).cell(0));
     }
 
     @Test
     public void testPipeDelimitedFactory() throws CSVParseException {
-        CSVTable table = CSVParser.pipeDelimited().parse("a|b|c");
+        CSVTable table = new CSVParser('|', '"', false, true).parse("a|b|c");
         assertEquals("a", table.rows().get(0).cell(0));
     }
 
@@ -208,12 +228,7 @@ public class TestCSVParser {
 
     @Test
     public void testFluentBuilderChaining() throws CSVParseException {
-        CSVTable table = new CSVParser()
-                .withDelimiter(';')
-                .withQuoteChar('\'')
-                .withHeaders(true)
-                .withTrimWhitespace(true)
-                .parse("name;city\nAlice;'Paris, France'\nBob;Lyon");
+        CSVTable table = new CSVParser(';', '\'', true, true).parse("name;city\nAlice;'Paris, France'\nBob;Lyon");
 
         assertNotNull(table.header());
         assertEquals("name", table.header().cell(0));

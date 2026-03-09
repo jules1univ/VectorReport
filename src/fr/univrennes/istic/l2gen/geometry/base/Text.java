@@ -3,6 +3,7 @@ package fr.univrennes.istic.l2gen.geometry.base;
 import fr.univrennes.istic.l2gen.geometry.AbstractShape;
 import fr.univrennes.istic.l2gen.geometry.IShape;
 import fr.univrennes.istic.l2gen.geometry.Point;
+import fr.univrennes.istic.l2gen.svg.attributes.style.SVGStyle;
 import fr.univrennes.istic.l2gen.svg.interfaces.content.SVGContent;
 import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 import fr.univrennes.istic.l2gen.svg.interfaces.tag.SVGTag;
@@ -49,6 +50,13 @@ public final class Text extends AbstractShape {
      */
     public Text(Point center, String text) {
         this.center = center;
+        this.text = text;
+    }
+
+    public Text(double x, double y, String text, SVGStyle style) {
+        super(style);
+
+        this.center = new Point(x, y);
         this.text = text;
     }
 
@@ -133,7 +141,8 @@ public final class Text extends AbstractShape {
      */
     @Override
     public IShape copy() {
-        return new Text(this.center.getX(), this.center.getY(), this.text);
+        Text copy = new Text(this.center.getX(), this.center.getY(), this.text, this.style.copy());
+        return copy;
     }
 
 }

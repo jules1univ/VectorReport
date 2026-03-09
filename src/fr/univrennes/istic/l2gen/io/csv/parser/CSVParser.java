@@ -30,26 +30,6 @@ public final class CSVParser {
         this.trimWhitespace = trimWhitespace;
     }
 
-    public CSVParser withDelimiter(char delimiter) {
-        this.delimiter = delimiter;
-        return this;
-    }
-
-    public CSVParser withQuoteChar(char quoteChar) {
-        this.quoteChar = quoteChar;
-        return this;
-    }
-
-    public CSVParser withHeaders(boolean hasHeaders) {
-        this.hasHeaders = hasHeaders;
-        return this;
-    }
-
-    public CSVParser withTrimWhitespace(boolean trimWhitespace) {
-        this.trimWhitespace = trimWhitespace;
-        return this;
-    }
-
     public CSVTable parse(File file) throws CSVParseException {
         try (FileReader reader = new FileReader(file)) {
             return parse(reader);
@@ -153,15 +133,4 @@ public final class CSVParser {
         return row;
     }
 
-    public static CSVParser semicolonDelimited() {
-        return new CSVParser(';', '"', false, true);
-    }
-
-    public static CSVParser tabDelimited() {
-        return new CSVParser('\t', '"', false, true);
-    }
-
-    public static CSVParser pipeDelimited() {
-        return new CSVParser('|', '"', false, true);
-    }
 }

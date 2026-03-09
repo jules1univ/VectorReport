@@ -7,10 +7,25 @@ import fr.univrennes.istic.l2gen.svg.interfaces.field.SVGField;
 public abstract class AbstractShape implements IShape {
 
     @SVGField
-    protected final SVGStyle style = new SVGStyle();
+    protected final SVGStyle style;
 
     @SVGField
-    protected final SVGTransform transform = new SVGTransform();
+    protected final SVGTransform transform;
+
+    public AbstractShape() {
+        this.style = new SVGStyle();
+        this.transform = new SVGTransform();
+    }
+
+    public AbstractShape(SVGStyle style) {
+        this.style = style;
+        this.transform = new SVGTransform();
+    }
+
+    public AbstractShape(SVGTransform transform) {
+        this.style = new SVGStyle();
+        this.transform = transform;
+    }
 
     @Override
     public String getDescription(int indent) {

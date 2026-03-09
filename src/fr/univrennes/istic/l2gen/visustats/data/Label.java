@@ -22,7 +22,7 @@ public record Label(String name, Color color) {
         Text title = new Text(position.getX(), position.getY(), name);
         title.getStyle()
                 .fontFamily("Arial")
-                .fontSize(26)
+                .fontSize(20)
                 .textAnchor("middle");
         return title;
     }

@@ -8,6 +8,10 @@ public record CSVTable(CSVRow header, List<CSVRow> rows) {
         this(null, new ArrayList<>());
     }
 
+    public CSVTable(CSVTable other) {
+        this(other.header, new ArrayList<>(other.rows));
+    }
+
     public void addRow(CSVRow row) {
         rows.add(row);
     }

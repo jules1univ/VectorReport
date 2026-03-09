@@ -69,10 +69,6 @@ public class TestXMLParser {
         assertEquals("d", d.getTagName());
     }
 
-    // -------------------------------------------------------------------------
-    // Attributes
-    // -------------------------------------------------------------------------
-
     @Test
     public void testSingleAttribute() throws XMLParseException, IOException {
         XMLTag tag = parse("<rect width=\"100\"/>");
