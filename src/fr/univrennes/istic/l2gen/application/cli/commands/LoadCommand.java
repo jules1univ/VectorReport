@@ -5,6 +5,7 @@ import fr.univrennes.istic.l2gen.application.core.CoreController;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 import java.io.File;
+import java.net.URI;
 import java.util.List;
 
 public final class LoadCommand implements ICommand {
@@ -18,12 +19,6 @@ public final class LoadCommand implements ICommand {
         }
 
         String filePath = args[0];
-        File file = new File(filePath);
-
-        if (!file.exists()) {
-            Log.error("File or folder does not exist: %s", filePath);
-            return false;
-        }
 
         Character delimiter = null;
         boolean hasHeaders = true;
@@ -38,20 +33,26 @@ public final class LoadCommand implements ICommand {
         }
 
         boolean success;
+        File file = new File(filePath);
+
         long startTime = System.currentTimeMillis();
         if (file.isFile()) {
             success = controller.getLoader().loadFile(file, delimiter, hasHeaders);
         } else if (file.isDirectory()) {
             success = controller.getLoader().loadFolder(file, delimiter, hasHeaders);
         } else {
-            Log.error("Invalid file or directory: %s", filePath);
-            return false;
+            try {
+                success = controller.getLoader().loadUrl(URI.create(filePath), delimiter, hasHeaders);
+            } catch (Exception e) {
+                Log.error(e, "Invalid source: %s", filePath);
+                return false;
+            }
         }
         long endTime = System.currentTimeMillis();
         Log.message("Loading completed in %d ms", (endTime - startTime));
 
-        List<CSVTable> tables = controller.getLoader().getLastLoaded();
-        if (tables.isEmpty()) {
+        List<CSVTable> tables = controller.getLoader().getLatestLoadedTables();
+        if (!success || tables.isEmpty()) {
             Log.message("No tables loaded from: %s", filePath);
             return false;
         }
@@ -89,6 +90,6 @@ public final class LoadCommand implements ICommand {
 
     @Override
     public String getUsage() {
-        return "load <file|folder> [-d <delimiter>] [--no-headers]";
+        return "load <file|folder|url> [-d <delimiter>] [--no-headers]";
     }
 }

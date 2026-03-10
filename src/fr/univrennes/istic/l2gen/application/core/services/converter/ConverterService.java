@@ -1,6 +1,5 @@
 package fr.univrennes.istic.l2gen.application.core.services.converter;
 
-import fr.univrennes.istic.l2gen.application.core.services.IService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 import fr.univrennes.istic.l2gen.svg.color.Color;
@@ -14,8 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ConverterService implements IService {
+public class ConverterService implements IConverterService {
 
+    @Override
     public DataSet createDataSet(CSVTable table, int valColIndex, String title, Color defaultColor) {
         Label label = new Label(title);
         DataSet data = new DataSet(label);
@@ -32,6 +32,7 @@ public class ConverterService implements IService {
         return data;
     }
 
+    @Override
     public DataSet createDataSet(CSVTable table, int valueColIndex, int labelColIndex, String title,
             Map<String, Color> colorMap, Color defaultColor) {
 
@@ -54,6 +55,7 @@ public class ConverterService implements IService {
         return data;
     }
 
+    @Override
     public DataSet createSummaryDataSet(CSVTable table, int categoryColIndex, int valueColIndex, String title,
             SummaryType type) {
         Label label = new Label(title);
@@ -84,6 +86,7 @@ public class ConverterService implements IService {
         return data;
     }
 
+    @Override
     public DataGroup createDataGroup(List<CSVTable> tables, int valueColIndex, int labelColIndex, String title,
             Map<String, Color> colorMap, Color defaultColor) {
 
@@ -97,6 +100,7 @@ public class ConverterService implements IService {
         return group;
     }
 
+    @Override
     public DataGroup createSummaryDataGroup(List<CSVTable> tables, int categoryColIndex, int valueColIndex,
             String title,
             SummaryType type) {

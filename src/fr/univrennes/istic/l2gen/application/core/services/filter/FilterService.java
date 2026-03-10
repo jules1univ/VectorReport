@@ -1,7 +1,6 @@
 package fr.univrennes.istic.l2gen.application.core.services.filter;
 
 import fr.univrennes.istic.l2gen.application.core.filter.IFilter;
-import fr.univrennes.istic.l2gen.application.core.services.IService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
@@ -10,29 +9,34 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public class FilterService implements IService {
+public class FilterService implements IFilterService {
 
     private final List<IFilter> filters = new ArrayList<>();
 
     public FilterService() {
     }
 
+    @Override
     public void add(IFilter filter) {
         this.filters.add(filter);
     }
 
+    @Override
     public void remove(IFilter filter) {
         this.filters.remove(filter);
     }
 
+    @Override
     public void clear() {
         this.filters.clear();
     }
 
+    @Override
     public List<IFilter> getAll() {
-        return this.filters;
+        return List.copyOf(this.filters);
     }
 
+    @Override
     public CSVTable apply(CSVTable table) {
         CSVTable copy = new CSVTable(table);
         for (IFilter filter : filters) {
@@ -41,10 +45,12 @@ public class FilterService implements IService {
         return copy;
     }
 
+    @Override
     public CSVTable apply(IFilter filter, CSVTable table) {
         return filter.apply(new CSVTable(table));
     }
 
+    @Override
     public CSVTable removeEmptyRows(CSVTable table) {
         CSVTable cleaned = new CSVTable(table.header().orElse(null), new ArrayList<>());
         for (CSVRow row : table.rows()) {
@@ -55,6 +61,7 @@ public class FilterService implements IService {
         return cleaned;
     }
 
+    @Override
     public CSVTable removeEmptyColumns(CSVTable table) {
         int columnCount = table.header().map(CSVRow::size).orElseGet(() -> table.rows().stream()
                 .mapToInt(CSVRow::size)
@@ -85,6 +92,7 @@ public class FilterService implements IService {
         return result;
     }
 
+    @Override
     public CSVTable sortByColumn(CSVTable table, int columnIndex, boolean ascending, boolean numeric) {
         CSVTable copy = new CSVTable(table);
         Comparator<CSVRow> comparator = (a, b) -> compareRows(a, b, columnIndex, numeric);
@@ -103,7 +111,6 @@ public class FilterService implements IService {
             try {
                 return Double.compare(Double.parseDouble(left.trim()), Double.parseDouble(right.trim()));
             } catch (NumberFormatException e) {
-                // Fallback to text when one value is not numeric.
             }
         }
         return left.compareToIgnoreCase(right);

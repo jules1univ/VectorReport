@@ -14,6 +14,7 @@ import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public final class CSVParser {
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 64;
 
     private Character delimiter = null;
     private final char quoteChar;
@@ -35,8 +36,8 @@ public final class CSVParser {
         }
     }
 
-    public CSVTable parse(String csvData) throws CSVParseException {
-        return parse(new StringReader(csvData));
+    public CSVTable parse(String raw) throws CSVParseException {
+        return parse(new StringReader(raw));
     }
 
     public CSVTable parse(Reader reader) throws CSVParseException {
@@ -63,7 +64,7 @@ public final class CSVParser {
     }
 
     public void stream(Reader reader, Consumer<CSVRow> rowConsumer) throws CSVParseException {
-        try (BufferedReader br = new BufferedReader(reader, 65536)) {
+        try (BufferedReader br = new BufferedReader(reader, DEFAULT_BUFFER_SIZE)) {
             String line;
             int lineNumber = 0;
 
