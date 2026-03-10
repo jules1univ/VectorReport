@@ -1,7 +1,8 @@
-package fr.univrennes.istic.l2gen.application.core.filter;
+package fr.univrennes.istic.l2gen.application.core.filter.comparaison;
 
 import java.util.Optional;
 
+import fr.univrennes.istic.l2gen.application.core.filter.IFilter;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 
 public final class ComparisonFilter implements IFilter {

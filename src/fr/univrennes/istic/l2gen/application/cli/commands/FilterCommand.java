@@ -1,14 +1,17 @@
 package fr.univrennes.istic.l2gen.application.cli.commands;
 
 import java.util.List;
+import java.util.Optional;
 
 import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
 import fr.univrennes.istic.l2gen.application.core.CoreController;
-import fr.univrennes.istic.l2gen.application.core.filter.ColumnFilter;
-import fr.univrennes.istic.l2gen.application.core.filter.ComparisonFilter;
-import fr.univrennes.istic.l2gen.application.core.filter.ComparisonOperator;
 import fr.univrennes.istic.l2gen.application.core.filter.IFilter;
-import fr.univrennes.istic.l2gen.application.core.filter.RangeFilter;
+import fr.univrennes.istic.l2gen.application.core.filter.column.ColumnFilter;
+import fr.univrennes.istic.l2gen.application.core.filter.comparaison.ComparisonFilter;
+import fr.univrennes.istic.l2gen.application.core.filter.comparaison.ComparisonOperator;
+import fr.univrennes.istic.l2gen.application.core.filter.range.RangeFilter;
+import fr.univrennes.istic.l2gen.application.core.filter.type.FilterValueType;
+import fr.univrennes.istic.l2gen.application.core.filter.type.TypeFilter;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public final class FilterCommand implements ICommand {
@@ -52,7 +55,7 @@ public final class FilterCommand implements ICommand {
     private boolean addFilter(CoreController controller, String[] args) {
         if (args.length < 2) {
             Log.error("Missing filter type");
-            Log.message("Available filter types: column, range, compare");
+            Log.message("Available filter types: column, range, compare, type");
             return false;
         }
 
@@ -67,11 +70,40 @@ public final class FilterCommand implements ICommand {
             case "compare" -> {
                 return addCompareFilter(controller, args);
             }
+            case "type" -> {
+                return addTypeFilter(controller, args);
+            }
             default -> {
                 Log.error("Unknown filter type: %s", filterType);
-                Log.message("Available filter types: column, range, compare");
+                Log.message("Available filter types: column, range, compare, type");
                 return false;
             }
+        }
+    }
+
+    private boolean addTypeFilter(CoreController controller, String[] args) {
+        if (args.length < 4) {
+            Log.error("Missing arguments for type filter");
+            Log.message("Usage: filter add type <col_index|col_name> <type>");
+            Log.message("Types: string, numeric, integer, floating, url, email, boolean, date, empty, notEmpty");
+            return false;
+        }
+
+        try {
+            int colIndex = this.getColumnIndex(controller.getTable(), args[2]);
+            FilterValueType valueType = FilterValueType.parse(args[3]);
+
+            IFilter filter = new TypeFilter(colIndex, valueType);
+            controller.getFilter().add(filter);
+
+            Log.message("Added type filter: column[%d] is %s", colIndex, valueType.name().toLowerCase());
+            return true;
+        } catch (NumberFormatException e) {
+            Log.error(e, "Invalid column index format");
+            return false;
+        } catch (IllegalArgumentException e) {
+            Log.error(e.getMessage());
+            return false;
         }
     }
 
@@ -83,7 +115,7 @@ public final class FilterCommand implements ICommand {
         }
 
         try {
-            int colIndex = Integer.parseInt(args[2]);
+            int colIndex = this.getColumnIndex(controller.getTable(), args[2]);
             String value = args[3];
             boolean exact = args.length > 4 && args[4].equalsIgnoreCase("exact");
 
@@ -107,7 +139,7 @@ public final class FilterCommand implements ICommand {
         }
 
         try {
-            int colIndex = Integer.parseInt(args[2]);
+            int colIndex = this.getColumnIndex(controller.getTable(), args[2]);
             Double min = args[3].equalsIgnoreCase("null") ? null : Double.parseDouble(args[3]);
             Double max = args[4].equalsIgnoreCase("null") ? null : Double.parseDouble(args[4]);
 
@@ -131,7 +163,7 @@ public final class FilterCommand implements ICommand {
         }
 
         try {
-            int colIndex = Integer.parseInt(args[2]);
+            int colIndex = this.getColumnIndex(controller.getTable(), args[2]);
             ComparisonOperator operator = ComparisonOperator.parse(args[3]);
 
             String value = null;
@@ -210,7 +242,7 @@ public final class FilterCommand implements ICommand {
         }
 
         try {
-            int colIndex = Integer.parseInt(args[1]);
+            int colIndex = this.getColumnIndex(controller.getTable(), args[1]);
             boolean ascending = !args[2].equalsIgnoreCase("desc");
             boolean numeric = args.length > 3
                     && (args[3].equalsIgnoreCase("numeric") || args[3].equalsIgnoreCase("number"));
@@ -256,6 +288,22 @@ public final class FilterCommand implements ICommand {
         return true;
     }
 
+    private int getColumnIndex(CSVTable table, String colIdentifier) {
+        try {
+            return Integer.parseInt(colIdentifier);
+        } catch (NumberFormatException e) {
+            if (table.header().isPresent()) {
+                int index = table.header().get().cells().indexOf(Optional.of(colIdentifier));
+                if (index == -1) {
+                    throw new IllegalArgumentException("Column not found: " + colIdentifier);
+                }
+                return index;
+            } else {
+                throw new IllegalArgumentException("Table has no header, column must be specified by index");
+            }
+        }
+    }
+
     @Override
     public String getName() {
         return "filter";
@@ -271,10 +319,14 @@ public final class FilterCommand implements ICommand {
         StringBuilder usage = new StringBuilder();
         usage.append("filter <action> [args...]\n");
         usage.append("Actions:\n");
-        usage.append("add column <col_index> <value> [exact] - Add a column filter\n");
-        usage.append("add range <col_index> <min> <max> - Add a range filter\n");
-        usage.append("add compare <col_index> <operator> [value] [numeric|text] - Add comparison filter\n");
-        usage.append("sort <col_index> <asc|desc> [numeric|text] - Sort current table\n");
+
+        usage.append("add column <col_index|col_name> <value> [exact] - Add a column filter\n");
+        usage.append("add range <col_index|col_name> <min> <max> - Add a range filter\n");
+        usage.append("add compare <col_index|col_name> <operator> [value] [numeric|text] - Add comparison filter\n");
+        usage.append(
+                "add type <col_index|col_name> <type> - Add a type filter (string|numeric|integer|floating|url|email|boolean|date|empty|notEmpty)\n");
+        usage.append("sort <col_index|col_name> <asc|desc> [numeric|text] - Sort current table\n");
+
         usage.append("cleanup <rows|columns|all> - Remove empty rows/columns\n");
         usage.append("apply - Apply active filters to current table\n");
         usage.append("list - List all active filters\n");

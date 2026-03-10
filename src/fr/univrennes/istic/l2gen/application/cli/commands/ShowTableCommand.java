@@ -30,6 +30,9 @@ public final class ShowTableCommand implements ICommand {
             case "table" -> {
                 return showTable(controller);
             }
+            case "summary" -> {
+                return showSummary(controller);
+            }
             case "range" -> {
                 return showRange(controller, args);
             }
@@ -68,6 +71,22 @@ public final class ShowTableCommand implements ICommand {
         } else {
             Log.message(table.toString());
         }
+        return true;
+    }
+
+    private boolean showSummary(CoreController controller) {
+        CSVTable table = controller.getTable();
+        Log.message("Table Summary:");
+        Log.message("Total Rows: %d", table.rows().size());
+
+        int totalCols = 0;
+        if (table.header().isPresent()) {
+            totalCols = table.header().get().cells().size();
+        } else if (!table.rows().isEmpty()) {
+            totalCols = table.rows().get(0).cells().size();
+        }
+        Log.message("Total Columns: %d", totalCols);
+        // TODO: Add more summary information like column types, sample values, etc.
         return true;
     }
 
@@ -158,6 +177,7 @@ public final class ShowTableCommand implements ICommand {
         usage.append("Actions:\n");
         usage.append("header - Show the table header if available\n");
         usage.append("table - Show the table with applied filters\n");
+        usage.append("summary - Show a summary of the table (row count, column count, etc.)\n");
         usage.append("range <offset> <limit> - Show rows where a numeric column is within the specified range\n");
         usage.append("column <col_index> [offset] [limit] - Show a specific column\n");
         usage.append("row <row_index> [offset] [limit] - Show a specific row\n");

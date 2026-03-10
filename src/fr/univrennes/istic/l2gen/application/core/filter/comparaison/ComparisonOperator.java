@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.application.core.filter;
+package fr.univrennes.istic.l2gen.application.core.filter.comparaison;
 
 public enum ComparisonOperator {
     EQ,
