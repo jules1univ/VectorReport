@@ -44,7 +44,7 @@ public final class LoaderService implements IService {
         return allSuccess;
     }
 
-    public boolean loadFile(File file, char delimiter, boolean hasHeader) {
+    public boolean loadFile(File file, Character delimiter, boolean hasHeader) {
         CSVParser parser = new CSVParser(delimiter, '"', hasHeader, true);
         try {
             CSVTable table = parser.parse(file);

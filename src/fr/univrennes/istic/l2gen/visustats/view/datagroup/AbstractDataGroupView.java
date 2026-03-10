@@ -66,7 +66,7 @@ public abstract class AbstractDataGroupView extends Group implements IDataGroupV
             this.elements.add(this.getAxisElement());
         }
 
-        Point titlePoint = new Point(center.getX(), center.getY() - this.getTotalElementsHeight() * 0.65);
+        Point titlePoint = new Point(center.getX(), center.getY() - this.getTotalElementsHeight() * 0.85);
         this.elements.add(this.data.title().createTitle(titlePoint));
     }
 

@@ -25,7 +25,7 @@ public final class LoadCommand implements ICommand {
             return false;
         }
 
-        char delimiter = ',';
+        Character delimiter = null;
         boolean hasHeaders = true;
 
         for (int i = 1; i < args.length; i++) {
@@ -38,6 +38,7 @@ public final class LoadCommand implements ICommand {
         }
 
         boolean success;
+        long startTime = System.currentTimeMillis();
         if (file.isFile()) {
             success = controller.getLoader().loadFile(file, delimiter, hasHeaders);
         } else if (file.isDirectory()) {
@@ -46,6 +47,8 @@ public final class LoadCommand implements ICommand {
             Log.error("Invalid file or directory: %s", filePath);
             return false;
         }
+        long endTime = System.currentTimeMillis();
+        Log.message("Loading completed in %d ms", (endTime - startTime));
 
         List<CSVTable> tables = controller.getLoader().getLastLoaded();
         if (tables.isEmpty()) {
@@ -59,9 +62,13 @@ public final class LoadCommand implements ICommand {
 
             Log.message("Successfully loaded: %s", filePath);
             Log.message("Rows: %d", table.rows().size());
-            if (table.header() != null) {
-                Log.message("Columns: %s", String.join(", ", table.header().values()));
+
+            if (table.header().isPresent()) {
+                Log.message("Columns: %d", table.header().get().cells().size());
+            } else if (!table.rows().isEmpty()) {
+                Log.message("Columns: %d", table.rows().get(0).cells().size());
             }
+
         } else {
             controller.setTable(tables.get(0));
             Log.message("Successfully loaded %d tables from folder: %s", tables.size(), filePath);

@@ -4,6 +4,7 @@ import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class GroupFilter implements IFilter {
 
@@ -42,7 +43,7 @@ public class GroupFilter implements IFilter {
     }
 
     @Override
-    public boolean matches(CSVRow row, CSVRow header) {
+    public boolean matches(CSVRow row, Optional<CSVRow> header) {
         return switch (operator) {
             case AND -> filters.stream().allMatch(f -> f.matches(row, header));
             case OR -> filters.stream().anyMatch(f -> f.matches(row, header));

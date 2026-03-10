@@ -1,5 +1,7 @@
 package fr.univrennes.istic.l2gen.application.core.filter;
 
+import java.util.Optional;
+
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 
 public class RangeFilter implements IFilter {
@@ -19,11 +21,11 @@ public class RangeFilter implements IFilter {
         this.inclusive = inclusive;
     }
 
-    public static RangeFilter byName(String colName, Double minValue, Double maxValue, CSVRow header) {
+    public static RangeFilter name(String colName, Double minValue, Double maxValue, CSVRow header) {
         if (header == null) {
             throw new IllegalArgumentException("Header is required for column name filtering");
         }
-        int index = header.values().indexOf(colName);
+        int index = header.cells().indexOf(Optional.of(colName));
         if (index == -1) {
             throw new IllegalArgumentException("Column not found: " + colName);
         }
@@ -31,18 +33,18 @@ public class RangeFilter implements IFilter {
     }
 
     @Override
-    public boolean matches(CSVRow row, CSVRow header) {
-        if (columnIndex < 0 || columnIndex >= row.values().size()) {
+    public boolean matches(CSVRow row, Optional<CSVRow> header) {
+        if (columnIndex < 0 || columnIndex >= row.cells().size()) {
             return false;
         }
 
-        String cellValue = row.cell(columnIndex);
-        if (cellValue == null || cellValue.trim().isEmpty()) {
+        Optional<String> cellValue = row.cell(columnIndex);
+        if (!cellValue.isPresent() || cellValue.get().trim().isEmpty()) {
             return false;
         }
 
         try {
-            double value = Double.parseDouble(cellValue);
+            double value = Double.parseDouble(cellValue.get());
 
             if (minValue != null) {
                 if (inclusive) {

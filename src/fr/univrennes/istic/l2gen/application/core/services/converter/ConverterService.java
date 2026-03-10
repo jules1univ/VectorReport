@@ -21,9 +21,9 @@ public class ConverterService implements IService {
         DataSet data = new DataSet(label);
 
         for (CSVRow row : table.rows()) {
-            if (valColIndex < row.values().size()) {
+            if (valColIndex < row.cells().size() && !row.cell(valColIndex).isEmpty()) {
                 try {
-                    double value = Double.parseDouble(row.cell(valColIndex));
+                    double value = Double.parseDouble(row.cell(valColIndex).get());
                     data.values().add(new Value(value, defaultColor));
                 } catch (NumberFormatException e) {
                 }
@@ -39,10 +39,11 @@ public class ConverterService implements IService {
         DataSet data = new DataSet(label);
 
         for (CSVRow row : table.rows()) {
-            if (valueColIndex < row.values().size() && labelColIndex < row.values().size()) {
+            if (valueColIndex < row.cells().size() && labelColIndex < row.cells().size()
+                    && !row.cell(valueColIndex).isEmpty() && !row.cell(labelColIndex).isEmpty()) {
                 try {
-                    double value = Double.parseDouble(row.cell(valueColIndex));
-                    Color color = colorMap.getOrDefault(row.cell(labelColIndex), defaultColor);
+                    double value = Double.parseDouble(row.cell(valueColIndex).get());
+                    Color color = colorMap.getOrDefault(row.cell(labelColIndex).get(), defaultColor);
 
                     data.values().add(new Value(value, color));
                 } catch (NumberFormatException e) {
@@ -53,65 +54,6 @@ public class ConverterService implements IService {
         return data;
     }
 
-    public DataGroup createDataGroup(CSVTable table, List<Integer> valueColIndices, String title) {
-        Label label = new Label(title);
-        DataGroup group = new DataGroup(label);
-
-        CSVRow header = table.header();
-        for (int i = 0; i < valueColIndices.size(); i++) {
-            int colIndex = valueColIndices.get(i);
-            String dataTitle = (header != null && colIndex < header.values().size())
-                    ? header.cell(colIndex)
-                    : "Series " + (i + 1);
-
-            Color color = Color.random();
-            DataSet data = this.createDataSet(table, colIndex, dataTitle, color);
-
-            group.add(data);
-            group.add(new Label(dataTitle, color));
-        }
-
-        return group;
-    }
-
-    public DataGroup createDataGroup(CSVTable table, int categoryColIndex,
-            int valueColIndex, String title) {
-        Label groupLabel = new Label(title);
-        DataGroup dataGroup = new DataGroup(groupLabel);
-
-        Map<String, List<Double>> categoryValues = new HashMap<>();
-
-        for (CSVRow row : table.rows()) {
-            if (categoryColIndex < row.values().size() && valueColIndex < row.values().size()) {
-                try {
-                    String category = row.cell(categoryColIndex);
-                    double value = Double.parseDouble(row.cell(valueColIndex));
-
-                    categoryValues.computeIfAbsent(category, k -> new ArrayList<>()).add(value);
-                } catch (NumberFormatException e) {
-                }
-            }
-        }
-
-        for (Map.Entry<String, List<Double>> entry : categoryValues.entrySet()) {
-            String category = entry.getKey();
-            List<Double> values = entry.getValue();
-
-            Color color = Color.random();
-            Label dataSetLabel = new Label(category, color);
-            DataSet dataSet = new DataSet(dataSetLabel);
-
-            for (double value : values) {
-                dataSet.values().add(new Value(value, color));
-            }
-
-            dataGroup.add(dataSet);
-            dataGroup.add(new Label(category, color));
-        }
-
-        return dataGroup;
-    }
-
     public DataSet createSummaryDataSet(CSVTable table, int categoryColIndex, int valueColIndex, String title,
             SummaryType type) {
         Label label = new Label(title);
@@ -120,10 +62,11 @@ public class ConverterService implements IService {
         Map<String, List<Double>> categoryValues = new HashMap<>();
 
         for (CSVRow row : table.rows()) {
-            if (categoryColIndex < row.values().size() && valueColIndex < row.values().size()) {
+            if (categoryColIndex < row.cells().size() && valueColIndex < row.cells().size()
+                    && !row.cell(categoryColIndex).isEmpty() && !row.cell(valueColIndex).isEmpty()) {
                 try {
-                    String category = row.cell(categoryColIndex);
-                    double value = Double.parseDouble(row.cell(valueColIndex));
+                    String category = row.cell(categoryColIndex).get();
+                    double value = Double.parseDouble(row.cell(valueColIndex).get());
 
                     categoryValues.computeIfAbsent(category, k -> new ArrayList<>()).add(value);
                 } catch (NumberFormatException e) {
@@ -141,39 +84,30 @@ public class ConverterService implements IService {
         return data;
     }
 
-    public DataGroup createSummaryDataGroup(CSVTable table, int categoryColIndex, List<Integer> valueColIndices,
-            String title,
-            SummaryType type) {
+    public DataGroup createDataGroup(List<CSVTable> tables, int valueColIndex, int labelColIndex, String title,
+            Map<String, Color> colorMap, Color defaultColor) {
+
         Label label = new Label(title);
         DataGroup group = new DataGroup(label);
 
-        Map<String, List<Double>> categoryValues = new HashMap<>();
-
-        for (CSVRow row : table.rows()) {
-            if (categoryColIndex < row.values().size()) {
-                String category = row.cell(categoryColIndex);
-
-                for (int valueColIndex : valueColIndices) {
-                    if (valueColIndex < row.values().size()) {
-                        try {
-                            double value = Double.parseDouble(row.cell(valueColIndex));
-                            categoryValues.computeIfAbsent(category, k -> new ArrayList<>()).add(value);
-                        } catch (NumberFormatException e) {
-                        }
-                    }
-                }
-            }
+        for (CSVTable table : tables) {
+            DataSet dataSet = createDataSet(table, valueColIndex, labelColIndex, title, colorMap, defaultColor);
+            group.datasets().add(dataSet);
         }
+        return group;
+    }
 
-        for (Map.Entry<String, List<Double>> entry : categoryValues.entrySet()) {
-            List<Double> values = entry.getValue();
-            double result = this.calculateSummary(values, type);
+    public DataGroup createSummaryDataGroup(List<CSVTable> tables, int categoryColIndex, int valueColIndex,
+            String title,
+            SummaryType type) {
 
-            group.add(
-                    new DataSet(List.of(new Value(result, Color.random())),
-                            new Label(entry.getKey(), Color.random())));
+        Label label = new Label(title);
+        DataGroup group = new DataGroup(label);
+
+        for (CSVTable table : tables) {
+            DataSet dataSet = createSummaryDataSet(table, categoryColIndex, valueColIndex, title, type);
+            group.datasets().add(dataSet);
         }
-
         return group;
     }
 

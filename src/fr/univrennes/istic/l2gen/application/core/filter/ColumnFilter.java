@@ -1,5 +1,7 @@
 package fr.univrennes.istic.l2gen.application.core.filter;
 
+import java.util.Optional;
+
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 
 public class ColumnFilter implements IFilter {
@@ -21,7 +23,7 @@ public class ColumnFilter implements IFilter {
         if (header == null) {
             throw new IllegalArgumentException("Header is required for column name filtering");
         }
-        int index = header.values().indexOf(colName);
+        int index = header.cells().indexOf(Optional.of(colName));
         if (index == -1) {
             throw new IllegalArgumentException("Column not found: " + colName);
         }
@@ -29,20 +31,20 @@ public class ColumnFilter implements IFilter {
     }
 
     @Override
-    public boolean matches(CSVRow row, CSVRow header) {
-        if (columnIndex < 0 || columnIndex >= row.values().size()) {
+    public boolean matches(CSVRow row, Optional<CSVRow> header) {
+        if (columnIndex < 0 || columnIndex >= row.cells().size()) {
             return false;
         }
 
-        String cellValue = row.cell(columnIndex);
-        if (cellValue == null) {
+        Optional<String> cellValue = row.cell(columnIndex);
+        if (!cellValue.isPresent()) {
             return expectedValue == null;
         }
 
         if (exactMatch) {
-            return cellValue.equals(expectedValue);
+            return cellValue.get().equals(expectedValue);
         } else {
-            return cellValue.contains(expectedValue);
+            return cellValue.get().contains(expectedValue);
         }
     }
 }

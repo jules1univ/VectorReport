@@ -18,14 +18,14 @@ public final class CLIApp extends CoreApp<CLIController> {
     @Override
     public void start() {
         if (this.controller.init()) {
-            Log.message("Application failed to init.");
+            Log.error("Application failed to init.");
         }
 
         this.running = true;
         this.printWelcome();
 
         while (running) {
-            Optional<String> optInput = Log.input("vec>");
+            Optional<String> optInput = Log.input("\nvec>");
             if (optInput.isEmpty()) {
                 continue;
             }

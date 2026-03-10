@@ -2,6 +2,7 @@ package fr.univrennes.istic.l2gen.application.core.filter;
 
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -28,11 +29,11 @@ public class LabelFilter implements IFilter {
         }
     }
 
-    public static LabelFilter byName(String colName, List<String> allowedLabels, CSVRow header) {
+    public static LabelFilter name(String colName, List<String> allowedLabels, CSVRow header) {
         if (header == null) {
             throw new IllegalArgumentException("Header is required for column name filtering");
         }
-        int index = header.values().indexOf(colName);
+        int index = header.cells().indexOf(Optional.of(colName));
         if (index == -1) {
             throw new IllegalArgumentException("Column not found: " + colName);
         }
@@ -40,20 +41,20 @@ public class LabelFilter implements IFilter {
     }
 
     @Override
-    public boolean matches(CSVRow row, CSVRow header) {
-        if (columnIndex < 0 || columnIndex >= row.values().size()) {
+    public boolean matches(CSVRow row, Optional<CSVRow> header) {
+        if (columnIndex < 0 || columnIndex >= row.cells().size()) {
             return false;
         }
 
-        String cellValue = row.cell(columnIndex);
-        if (cellValue == null) {
+        Optional<String> cellValue = row.cell(columnIndex);
+        if (!cellValue.isPresent()) {
             return false;
         }
 
         if (caseSensitive) {
-            return allowedLabels.contains(cellValue);
+            return allowedLabels.contains(cellValue.get());
         } else {
-            return allowedLabels.contains(cellValue.toLowerCase());
+            return allowedLabels.contains(cellValue.get().toLowerCase());
         }
     }
 }

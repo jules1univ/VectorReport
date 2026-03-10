@@ -5,6 +5,8 @@ import java.util.List;
 import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
 import fr.univrennes.istic.l2gen.application.core.CoreController;
 import fr.univrennes.istic.l2gen.application.core.filter.ColumnFilter;
+import fr.univrennes.istic.l2gen.application.core.filter.ComparisonFilter;
+import fr.univrennes.istic.l2gen.application.core.filter.ComparisonOperator;
 import fr.univrennes.istic.l2gen.application.core.filter.IFilter;
 import fr.univrennes.istic.l2gen.application.core.filter.RangeFilter;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
@@ -33,6 +35,12 @@ public final class FilterCommand implements ICommand {
             case "apply" -> {
                 return applyFilters(controller);
             }
+            case "sort" -> {
+                return sortTable(controller, args);
+            }
+            case "cleanup" -> {
+                return cleanupTable(controller, args);
+            }
             default -> {
                 Log.error("Unknown filter action: %s", action);
                 Log.message("Usage: %s", getUsage());
@@ -44,7 +52,7 @@ public final class FilterCommand implements ICommand {
     private boolean addFilter(CoreController controller, String[] args) {
         if (args.length < 2) {
             Log.error("Missing filter type");
-            Log.message("Available filter types: column, range");
+            Log.message("Available filter types: column, range, compare");
             return false;
         }
 
@@ -56,9 +64,12 @@ public final class FilterCommand implements ICommand {
             case "range" -> {
                 return addRangeFilter(controller, args);
             }
+            case "compare" -> {
+                return addCompareFilter(controller, args);
+            }
             default -> {
                 Log.error("Unknown filter type: %s", filterType);
-                Log.message("Available filter types: column, range");
+                Log.message("Available filter types: column, range, compare");
                 return false;
             }
         }
@@ -111,6 +122,48 @@ public final class FilterCommand implements ICommand {
         }
     }
 
+    private boolean addCompareFilter(CoreController controller, String[] args) {
+        if (args.length < 4) {
+            Log.error("Missing arguments for compare filter");
+            Log.message("Usage: filter add compare <col_index> <operator> [value] [numeric|text]");
+            Log.message("Operators: =, !=, >, >=, <, <=, contains, startsWith, endsWith, empty, notEmpty");
+            return false;
+        }
+
+        try {
+            int colIndex = Integer.parseInt(args[2]);
+            ComparisonOperator operator = ComparisonOperator.parse(args[3]);
+
+            String value = null;
+            boolean numeric = false;
+
+            if (operator != ComparisonOperator.EMPTY && operator != ComparisonOperator.NOT_EMPTY) {
+                if (args.length < 5) {
+                    Log.error("Missing comparison value");
+                    return false;
+                }
+                value = args[4];
+            }
+
+            if (args.length > 5) {
+                numeric = args[5].equalsIgnoreCase("numeric") || args[5].equalsIgnoreCase("number");
+            }
+
+            IFilter filter = new ComparisonFilter(colIndex, operator, value, numeric, true);
+            controller.getFilter().add(filter);
+
+            Log.message("Added comparison filter: column[%d] %s %s", colIndex, operator,
+                    value == null ? "" : ("'" + value + "'"));
+            return true;
+        } catch (NumberFormatException e) {
+            Log.error(e, "Invalid column index format");
+            return false;
+        } catch (IllegalArgumentException e) {
+            Log.error(e.getMessage());
+            return false;
+        }
+    }
+
     private boolean listFilters(CoreController controller) {
         List<IFilter> filters = controller.getFilter().getAll();
 
@@ -133,9 +186,73 @@ public final class FilterCommand implements ICommand {
     }
 
     private boolean applyFilters(CoreController controller) {
+        if (controller.getTable() == null) {
+            Log.error("No table selected. Load a table first.");
+            return false;
+        }
+
         CSVTable filtered = controller.getFilter().apply(controller.getTable());
+        controller.setTable(filtered);
         Log.message("Filters applied");
         Log.message("Rows after filtering: %d", filtered.rows().size());
+        return true;
+    }
+
+    private boolean sortTable(CoreController controller, String[] args) {
+        if (controller.getTable() == null) {
+            Log.error("No table selected. Load a table first.");
+            return false;
+        }
+        if (args.length < 3) {
+            Log.error("Missing arguments for sorting");
+            Log.message("Usage: filter sort <col_index> <asc|desc> [numeric|text]");
+            return false;
+        }
+
+        try {
+            int colIndex = Integer.parseInt(args[1]);
+            boolean ascending = !args[2].equalsIgnoreCase("desc");
+            boolean numeric = args.length > 3
+                    && (args[3].equalsIgnoreCase("numeric") || args[3].equalsIgnoreCase("number"));
+
+            CSVTable sorted = controller.getFilter().sortByColumn(controller.getTable(), colIndex, ascending, numeric);
+            controller.setTable(sorted);
+            Log.message("Table sorted by column[%d] (%s, %s)", colIndex, ascending ? "asc" : "desc",
+                    numeric ? "numeric" : "text");
+            return true;
+        } catch (NumberFormatException e) {
+            Log.error(e, "Invalid column index format");
+            return false;
+        }
+    }
+
+    private boolean cleanupTable(CoreController controller, String[] args) {
+        if (controller.getTable() == null) {
+            Log.error("No table selected. Load a table first.");
+            return false;
+        }
+        if (args.length < 2) {
+            Log.error("Missing cleanup target");
+            Log.message("Usage: filter cleanup <rows|columns|all>");
+            return false;
+        }
+
+        CSVTable table = controller.getTable();
+        CSVTable result;
+        switch (args[1].toLowerCase()) {
+            case "rows" -> result = controller.getFilter().removeEmptyRows(table);
+            case "columns", "cols" -> result = controller.getFilter().removeEmptyColumns(table);
+            case "all" ->
+                result = controller.getFilter().removeEmptyColumns(controller.getFilter().removeEmptyRows(table));
+            default -> {
+                Log.error("Unknown cleanup target: %s", args[1]);
+                Log.message("Usage: filter cleanup <rows|columns|all>");
+                return false;
+            }
+        }
+
+        controller.setTable(result);
+        Log.message("Cleanup applied. Rows: %d", result.rows().size());
         return true;
     }
 
@@ -154,11 +271,14 @@ public final class FilterCommand implements ICommand {
         StringBuilder usage = new StringBuilder();
         usage.append("filter <action> [args...]\n");
         usage.append("Actions:\n");
-        usage.append("add column <col_index> <value> [exact]\n");
-        usage.append("add range <col_index> <min> <max>\n");
-        usage.append("list\n");
-        usage.append("clear\n");
-        usage.append("apply");
+        usage.append("add column <col_index> <value> [exact] - Add a column filter\n");
+        usage.append("add range <col_index> <min> <max> - Add a range filter\n");
+        usage.append("add compare <col_index> <operator> [value] [numeric|text] - Add comparison filter\n");
+        usage.append("sort <col_index> <asc|desc> [numeric|text] - Sort current table\n");
+        usage.append("cleanup <rows|columns|all> - Remove empty rows/columns\n");
+        usage.append("apply - Apply active filters to current table\n");
+        usage.append("list - List all active filters\n");
+        usage.append("clear - Clear all filters\n");
         return usage.toString();
     }
 }
