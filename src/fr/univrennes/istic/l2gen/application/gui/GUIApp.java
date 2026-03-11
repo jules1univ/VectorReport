@@ -1,7 +1,7 @@
 package fr.univrennes.istic.l2gen.application.gui;
 
-import fr.univrennes.istic.l2gen.application.VectorReport;
 import fr.univrennes.istic.l2gen.application.core.CoreApp;
+import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
 import javax.swing.*;
 
@@ -26,7 +26,7 @@ public final class GUIApp extends CoreApp<GUIController> {
         }
 
         SwingUtilities.invokeLater(() -> {
-            GUIView view = new GUIView(controller);
+            MainView view = new MainView(controller);
             view.setVisible(true);
         });
     }
