@@ -17,6 +17,7 @@
 ## Loader
 
 - chargement de fichiers CSV
+- chargemeent status (loading bar)
 
 ## Report
 
