@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
-public class tablePanel extends JFrame {
+public class TablePanel extends JFrame {
 
     private JTable table;
     private DefaultTableModel model;
@@ -24,7 +24,7 @@ public class tablePanel extends JFrame {
     private final Color ACCENT_COLOR = new Color(99, 102, 241);
     private final Color TEXT_COLOR = new Color(30, 41, 59);
 
-    public tablePanel() {
+    public TablePanel() {
         setTitle("CSV Explorer Pro");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -153,6 +153,6 @@ public class tablePanel extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new tablePanel().setVisible(true));
+        SwingUtilities.invokeLater(() -> new TablePanel().setVisible(true));
     }
 }
