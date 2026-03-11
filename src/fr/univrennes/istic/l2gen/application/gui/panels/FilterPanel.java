@@ -6,37 +6,49 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FilterPanel extends JPanel {
-    private JCheckBox filter1CheckBox;
-    private JCheckBox filter2CheckBox;
+
+    // Bouton de réinitialisation globale
     private JButton resetButton;
-    private JComboBox comboBox;
-    private Map<String, String> headerType = new HashMap<>(); // TODO creer getColumnsType() -> nom,type
+
+    // Menu déroulant pour choisir la colonne à trier
+    private JComboBox<String> comboBox;
+
+    // Association nom de colonne -> type de données (int, double, String,
+    // boolean...)
+    private Map<String, String> headerType = new HashMap<>();
+
+    // Boutons radio pour choisir l'ordre de tri
     private JRadioButton croissantRadioButton;
     private JRadioButton decroissantRadioButton;
     private JButton resetOrderButton;
     private ButtonGroup orderGroup;
-    private Map<String, JComponent[]> filterFields = new HashMap<>(); // colonne -> champs de filtre
 
+    // Association nom de colonne -> champs de filtre générés dynamiquement
+    private Map<String, JComponent[]> filterFields = new HashMap<>();
+
+    /**
+     * Génère un panneau de filtre adapté au type de la colonne.
+     * - int/double/date : deux champs min/max
+     * - Autres (String, boolean...) : un champ de recherche avec placeholder
+     */
     public JPanel filterType(String nameColumn, String type) {
         JPanel rowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         rowPanel.add(new JLabel(nameColumn + " : "));
 
         if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("double") || type.equalsIgnoreCase("date")) {
+            // Champs min et max pour les types numériques/date
             JTextField minField = new JTextField(5);
             JTextField maxField = new JTextField(5);
-            minField.setToolTipText("min");
-            maxField.setToolTipText("max");
-            rowPanel.add(new JLabel("min"));
+            rowPanel.add(new JLabel("Valeur minimale"));
             rowPanel.add(minField);
-            rowPanel.add(new JLabel("max"));
+            rowPanel.add(new JLabel("Valeur maximale"));
             rowPanel.add(maxField);
             filterFields.put(nameColumn, new JComponent[] { minField, maxField });
-        }
-        if (type.equalsIgnoreCase("string")) {
-            JTextField searchField = new JTextField("rechercher...");
+        } else {
+            // Champ de recherche pour les autres types
+            JTextField searchField = new JTextField("rechercher...", 10);
             rowPanel.add(searchField);
             filterFields.put(nameColumn, new JComponent[] { searchField });
-        } else {
         }
 
         return rowPanel;
@@ -45,21 +57,26 @@ public class FilterPanel extends JPanel {
     public FilterPanel() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Filtres"));
+
+        // Panneau central pour les filtres par colonne
         JPanel filtersPanel = new JPanel();
         filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.Y_AXIS));
+
+        // Panneau nord pour le tri (comboBox + boutons radio)
         JPanel orderPanels = new JPanel();
         orderPanels.setLayout(new BoxLayout(orderPanels, BoxLayout.Y_AXIS));
 
-        // Exemple fictif d'association nom de colonne -> type
+        // Données fictives : à remplacer par getColumnsType() plus tard
         headerType.put("pimon", "int");
         headerType.put("pilou", "String");
         headerType.put("azerty", "double");
         headerType.put("grougrou", "boolean");
 
-        // Menu déroulant
-        comboBox = new JComboBox<>(headerType.keySet().toArray());
+        // Menu déroulant des colonnes disponibles
+        comboBox = new JComboBox<>(headerType.keySet().toArray(new String[0]));
         orderPanels.add(comboBox);
-        // Ajout des boutons radio pour l'ordre
+
+        // Boutons radio pour l'ordre de tri
         croissantRadioButton = new JRadioButton("Croissant");
         decroissantRadioButton = new JRadioButton("Décroissant");
         resetOrderButton = new JButton("Supprimer ordre");
@@ -71,16 +88,14 @@ public class FilterPanel extends JPanel {
         orderPanels.add(decroissantRadioButton);
         orderPanels.add(resetOrderButton);
 
-        // Panneau de filtres dynamiques selon le type
+        // Panneau de filtre dynamique pour une colonne (en dur pour l'instant)
         JPanel dynamicFilterPanel = new JPanel();
         dynamicFilterPanel.setLayout(new BoxLayout(dynamicFilterPanel, BoxLayout.Y_AXIS));
-        dynamicFilterPanel.setBorder(BorderFactory.createTitledBorder("Filtres par colonne"));
-
-        dynamicFilterPanel.add(filterType("pimon", "String"));
-
+        dynamicFilterPanel.setBorder(BorderFactory.createTitledBorder("Filtre par colonne"));
+        dynamicFilterPanel.add(filterType("pimon", "Int"));
         filtersPanel.add(dynamicFilterPanel);
 
-        // Bouton reset
+        // Bouton de réinitialisation globale
         resetButton = new JButton("Réinitialiser");
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(resetButton);
@@ -89,37 +104,39 @@ public class FilterPanel extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
         add(orderPanels, BorderLayout.NORTH);
 
-        // Action Listener pour le comboBox et les boutons radio
+        // Listener : affiche la colonne et l'ordre sélectionnés
         comboBox.addActionListener(e -> {
             String selectedCol = (String) comboBox.getSelectedItem();
             String order = croissantRadioButton.isSelected() ? "Croissant"
                     : decroissantRadioButton.isSelected() ? "Décroissant" : "";
-            System.out.println("Colonne sélectionnée : " + selectedCol + ", Ordre : " + order);
+            System.out.println("Colonne : " + selectedCol + ", Ordre : " + order);
         });
+
         croissantRadioButton.addActionListener(e -> {
             String selectedCol = (String) comboBox.getSelectedItem();
-            System.out.println("Colonne sélectionnée : " + selectedCol + ", Ordre : Croissant");
+            System.out.println("Colonne : " + selectedCol + ", Ordre : Croissant");
         });
+
         decroissantRadioButton.addActionListener(e -> {
             String selectedCol = (String) comboBox.getSelectedItem();
-            System.out.println("Colonne sélectionnée : " + selectedCol + ", Ordre : Décroissant");
+            System.out.println("Colonne : " + selectedCol + ", Ordre : Décroissant");
         });
 
+        // Listener : réinitialise l'ordre de tri
         resetOrderButton.addActionListener(e -> {
-            // Désélectionner les boutons radio
             orderGroup.clearSelection();
-            System.out.println("reset ordre croissant/décroissant");
+            System.out.println("Ordre réinitialisé");
+        });
+
+        // Listener : réinitialise tous les filtres
+        resetButton.addActionListener(e -> {
+            orderGroup.clearSelection();
+            comboBox.setSelectedIndex(0);
+            System.out.println("Filtres réinitialisés");
         });
     }
 
-    // Getters pour accéder aux composants si besoin
-    public JCheckBox getFilter1CheckBox() {
-        return filter1CheckBox;
-    }
-
-    public JCheckBox getFilter2CheckBox() {
-        return filter2CheckBox;
-    }
+    // --- Getters ---
 
     public JButton getResetButton() {
         return resetButton;
@@ -141,11 +158,13 @@ public class FilterPanel extends JPanel {
         return filterFields;
     }
 
+    // --- Main de test ---
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("FilterPanel");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(300, 250);
+            frame.setSize(350, 300);
             frame.setLocationRelativeTo(null);
             frame.setContentPane(new FilterPanel());
             frame.setVisible(true);
