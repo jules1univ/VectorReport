@@ -1,5 +1,5 @@
 package fr.univrennes.istic.l2gen.application.gui.panels;
 
-public class FilePanel {
+public class ChartParamPanel {
 
 }

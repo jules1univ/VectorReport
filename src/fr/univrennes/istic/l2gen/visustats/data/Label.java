@@ -13,7 +13,7 @@ public record Label(String name, Color color) {
         Text text = new Text(position.getX(), position.getY(), name);
         text.getStyle()
                 .fontFamily("Arial")
-                .fontSize(16)
+                .fontSize(12)
                 .textAnchor("middle");
         return text;
     }
@@ -22,7 +22,7 @@ public record Label(String name, Color color) {
         Text title = new Text(position.getX(), position.getY(), name);
         title.getStyle()
                 .fontFamily("Arial")
-                .fontSize(26)
+                .fontSize(22)
                 .textAnchor("middle");
         return title;
     }

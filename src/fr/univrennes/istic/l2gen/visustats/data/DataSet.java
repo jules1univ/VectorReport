@@ -23,6 +23,10 @@ public record DataSet(List<Value> values, Label title) {
         return this.values.stream().mapToDouble(Value::value).min().orElse(0.0);
     }
 
+    public double average() {
+        return this.values.isEmpty() ? 0.0 : this.sum() / this.values.size();
+    }
+
     public double getValue(int index) {
         return this.values.get(index).value();
     }

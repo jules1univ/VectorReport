@@ -267,4 +267,17 @@ public final class SVGStyle implements ISVGAttribute {
         alignmentBaseline.ifPresent(a -> sb.append("alignment-baseline:").append(a).append(";"));
         return sb.toString();
     }
+
+    public SVGStyle copy() {
+        SVGStyle copy = new SVGStyle();
+        copy.strokeWidth = this.strokeWidth;
+        copy.strokeColor = this.strokeColor;
+        copy.fillColor = this.fillColor;
+        copy.fontSize = this.fontSize;
+        copy.fontFamily = this.fontFamily;
+        copy.textAnchor = this.textAnchor;
+        copy.alignmentBaseline = this.alignmentBaseline;
+        copy.strokeDashArray = this.strokeDashArray;
+        return copy;
+    }
 }

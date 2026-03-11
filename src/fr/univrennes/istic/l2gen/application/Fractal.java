@@ -7,28 +7,10 @@ import java.util.List;
 import fr.univrennes.istic.l2gen.geometry.Group;
 import fr.univrennes.istic.l2gen.geometry.IShape;
 
-/**
- * Classe pour générer des fractales récursives.
- * Utilise une forme de base et la divise en sous-formes résizées et
- * repositionnées.
- */
 public final class Fractal {
-    // IDrawer, IDraw, ect...
-
-    /**
-     * Constructeur par défaut pour la génération de fractales.
-     */
     public Fractal() {
     }
 
-    /**
-     * Génère une fractale récursive à partir d'une forme de base.
-     * Chaque niveau crée 4 copies résizées et repositionnées de la forme.
-     * 
-     * @param base   la forme de base pour la fractale
-     * @param niveau le nombre de niveaux de récursion
-     * @return un groupe contenant la fractale générée
-     */
     public IShape draw(IShape base, int niveau) {
         if (niveau <= 0) {
             return new Group(List.of(base));
