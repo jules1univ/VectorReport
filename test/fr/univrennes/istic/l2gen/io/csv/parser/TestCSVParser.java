@@ -19,9 +19,9 @@ public class TestCSVParser {
         assertEquals(1, table.rows().size());
 
         CSVRow row = table.rows().get(0);
-        assertEquals("a", row.cell(0).get());
-        assertEquals("b", row.cell(1).get());
-        assertEquals("c", row.cell(2).get());
+        assertEquals("a", row.getCell(0).get());
+        assertEquals("b", row.getCell(1).get());
+        assertEquals("c", row.getCell(2).get());
     }
 
     @Test
@@ -47,25 +47,25 @@ public class TestCSVParser {
     public void testSingleCell() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse("hello");
         assertEquals(1, table.rows().size());
-        assertEquals("hello", table.rows().get(0).cell(0).get());
+        assertEquals("hello", table.rows().get(0).getCell(0).get());
     }
 
     @Test
     public void testEmptyFields() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse("a,,c");
         CSVRow row = table.rows().get(0);
-        assertEquals("a", row.cell(0).get());
-        assertTrue("", row.cell(1).isEmpty());
-        assertEquals("c", row.cell(2).get());
+        assertEquals("a", row.getCell(0).get());
+        assertTrue("", row.getCell(1).isEmpty());
+        assertEquals("c", row.getCell(2).get());
     }
 
     @Test
     public void testAllEmptyFields() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse(",,");
         CSVRow row = table.rows().get(0);
-        assertTrue("", row.cell(0).isEmpty());
-        assertTrue("", row.cell(1).isEmpty());
-        assertTrue("", row.cell(2).isEmpty());
+        assertTrue("", row.getCell(0).isEmpty());
+        assertTrue("", row.getCell(1).isEmpty());
+        assertTrue("", row.getCell(2).isEmpty());
     }
 
     @Test
@@ -79,10 +79,10 @@ public class TestCSVParser {
     public void testWithHeaders() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', true, true).parse("name,age\nAlice,30");
         assertNotNull(table.header());
-        assertEquals("name", table.header().get().cell(0).get());
-        assertEquals("age", table.header().get().cell(1).get());
+        assertEquals("name", table.header().get().getCell(0).get());
+        assertEquals("age", table.header().get().getCell(1).get());
         assertEquals(1, table.rows().size());
-        assertEquals("Alice", table.rows().get(0).cell(0).get());
+        assertEquals("Alice", table.rows().get(0).getCell(0).get());
     }
 
     @Test
@@ -95,21 +95,21 @@ public class TestCSVParser {
     @Test
     public void testQuotedField() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse("\"hello world\",b");
-        assertEquals("hello world", table.rows().get(0).cell(0).get());
-        assertEquals("b", table.rows().get(0).cell(1).get());
+        assertEquals("hello world", table.rows().get(0).getCell(0).get());
+        assertEquals("b", table.rows().get(0).getCell(1).get());
     }
 
     @Test
     public void testQuotedFieldWithDelimiterInside() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse("\"a,b,c\",d");
-        assertEquals("a,b,c", table.rows().get(0).cell(0).get());
-        assertEquals("d", table.rows().get(0).cell(1).get());
+        assertEquals("a,b,c", table.rows().get(0).getCell(0).get());
+        assertEquals("d", table.rows().get(0).getCell(1).get());
     }
 
     @Test
     public void testEscapedQuoteInsideQuotedField() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse("\"say \"\"hello\"\"\",b");
-        assertEquals("say \"hello\"", table.rows().get(0).cell(0).get());
+        assertEquals("say \"hello\"", table.rows().get(0).getCell(0).get());
     }
 
     @Test
@@ -126,78 +126,78 @@ public class TestCSVParser {
     public void testTrimWhitespaceEnabledByDefault() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse("  a  ,  b  ,  c  ");
         CSVRow row = table.rows().get(0);
-        assertEquals("a", row.cell(0).get());
-        assertEquals("b", row.cell(1).get());
-        assertEquals("c", row.cell(2).get());
+        assertEquals("a", row.getCell(0).get());
+        assertEquals("b", row.getCell(1).get());
+        assertEquals("c", row.getCell(2).get());
     }
 
     @Test
     public void testTrimWhitespaceDisabled() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, false).parse("  a  ,  b  ");
-        assertEquals("  a  ", table.rows().get(0).cell(0).get());
-        assertEquals("  b  ", table.rows().get(0).cell(1).get());
+        assertEquals("  a  ", table.rows().get(0).getCell(0).get());
+        assertEquals("  b  ", table.rows().get(0).getCell(1).get());
     }
 
     @Test
     public void testSemicolonDelimiter() throws CSVParseException {
         CSVTable table = new CSVParser(';', '"', true, true).parse("a;b;c");
         CSVRow row = table.rows().get(0);
-        assertEquals("a", row.cell(0).get());
-        assertEquals("b", row.cell(1).get());
-        assertEquals("c", row.cell(2).get());
+        assertEquals("a", row.getCell(0).get());
+        assertEquals("b", row.getCell(1).get());
+        assertEquals("c", row.getCell(2).get());
     }
 
     @Test
     public void testTabDelimiter() throws CSVParseException {
         CSVTable table = new CSVParser('\t', '"', true, true).parse("a\tb\tc");
         CSVRow row = table.rows().get(0);
-        assertEquals("a", row.cell(0).get());
-        assertEquals("b", row.cell(1).get());
-        assertEquals("c", row.cell(2).get());
+        assertEquals("a", row.getCell(0).get());
+        assertEquals("b", row.getCell(1).get());
+        assertEquals("c", row.getCell(2).get());
     }
 
     @Test
     public void testPipeDelimiter() throws CSVParseException {
         CSVTable table = new CSVParser('|', '"', false, true).parse("a|b|c");
         CSVRow row = table.rows().get(0);
-        assertEquals("a", row.cell(0).get());
-        assertEquals("b", row.cell(1).get());
-        assertEquals("c", row.cell(2).get());
+        assertEquals("a", row.getCell(0).get());
+        assertEquals("b", row.getCell(1).get());
+        assertEquals("c", row.getCell(2).get());
     }
 
     @Test
     public void testCustomQuoteChar() throws CSVParseException {
 
         CSVTable table = new CSVParser(',', '\'', false, true).parse("'a,b',c");
-        assertEquals("a,b", table.rows().get(0).cell(0).get());
-        assertEquals("c", table.rows().get(0).cell(1).get());
+        assertEquals("a,b", table.rows().get(0).getCell(0).get());
+        assertEquals("c", table.rows().get(0).getCell(1).get());
     }
 
     @Test
     public void testSemicolonDelimitedFactory() throws CSVParseException {
         CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
-        assertEquals("a", table.rows().get(0).cell(0).get());
-        assertEquals("b", table.rows().get(0).cell(1).get());
-        assertEquals("c", table.rows().get(0).cell(2).get());
+        assertEquals("a", table.rows().get(0).getCell(0).get());
+        assertEquals("b", table.rows().get(0).getCell(1).get());
+        assertEquals("c", table.rows().get(0).getCell(2).get());
     }
 
     @Test
     public void testTabDelimitedFactory() throws CSVParseException {
         CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
-        assertEquals("a", table.rows().get(0).cell(0).get());
+        assertEquals("a", table.rows().get(0).getCell(0).get());
     }
 
     @Test
     public void testPipeDelimitedFactory() throws CSVParseException {
         CSVTable table = new CSVParser('|', '"', false, true).parse("a|b|c");
-        assertEquals("a", table.rows().get(0).cell(0).get());
+        assertEquals("a", table.rows().get(0).getCell(0).get());
     }
 
     @Test
     public void testParseFromReader() throws CSVParseException {
         CSVTable table = new CSVParser(',', '"', false, true).parse(new StringReader("a,b,c\n1,2,3"));
         assertEquals(2, table.rows().size());
-        assertEquals("1", table.rows().get(1).cell(0).get());
+        assertEquals("1", table.rows().get(1).getCell(0).get());
     }
 
     @Test
@@ -205,9 +205,9 @@ public class TestCSVParser {
         CSVTable table = new CSVParser(';', '\'', true, true).parse("name;city\nAlice;'Paris, France'\nBob;Lyon");
 
         assertNotNull(table.header());
-        assertEquals("name", table.header().get().cell(0).get());
-        assertEquals("Paris, France", table.rows().get(0).cell(1).get());
-        assertEquals("Lyon", table.rows().get(1).cell(1).get());
+        assertEquals("name", table.header().get().getCell(0).get());
+        assertEquals("Paris, France", table.rows().get(0).getCell(1).get());
+        assertEquals("Lyon", table.rows().get(1).getCell(1).get());
     }
 
 }

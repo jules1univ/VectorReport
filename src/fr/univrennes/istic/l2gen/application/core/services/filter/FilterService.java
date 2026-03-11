@@ -147,6 +147,6 @@ public class FilterService implements IFilterService {
         if (col < 0 || col >= row.size()) {
             return Optional.empty();
         }
-        return row.cell(col);
+        return row.getCell(col);
     }
 }

@@ -14,8 +14,8 @@ import fr.univrennes.istic.l2gen.application.core.filter.label.LabelFilter;
 import fr.univrennes.istic.l2gen.application.core.filter.pattern.PatternFilter;
 import fr.univrennes.istic.l2gen.application.core.filter.range.RangeFilter;
 import fr.univrennes.istic.l2gen.application.core.filter.type.TypeFilter;
-import fr.univrennes.istic.l2gen.application.core.filter.type.FilterValueType;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
+import fr.univrennes.istic.l2gen.io.csv.model.CSVSubtype;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public final class FilterBuilder {
@@ -106,7 +106,7 @@ public final class FilterBuilder {
         return this;
     }
 
-    public FilterBuilder is_type(String column, FilterValueType type) {
+    public FilterBuilder is_type(String column, CSVSubtype type) {
         int idx = resolveColumn(column);
         filters.add(new TypeFilter(idx, type));
         return this;
@@ -149,7 +149,7 @@ public final class FilterBuilder {
         } catch (NumberFormatException e) {
             if (table.header().isPresent()) {
                 CSVRow hdr = table.header().get();
-                int idx = hdr.cells().indexOf(Optional.of(identifier));
+                int idx = hdr.getCells().indexOf(Optional.of(identifier));
                 if (idx == -1) {
                     throw new IllegalArgumentException("Column not found: " + identifier);
                 }

@@ -151,4 +151,5 @@ public class FilterPanel extends JPanel {
             frame.setVisible(true);
         });
     }
+
 }

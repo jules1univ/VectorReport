@@ -31,7 +31,7 @@ public final class ComparisonFilter implements IFilter {
         if (header == null || header.isEmpty()) {
             throw new IllegalArgumentException("Header is required for column name filtering");
         }
-        int index = header.get().cells().indexOf(Optional.of(colName));
+        int index = header.get().getCells().indexOf(Optional.of(colName));
         if (index == -1) {
             throw new IllegalArgumentException("Column not found: " + colName);
         }
@@ -44,7 +44,7 @@ public final class ComparisonFilter implements IFilter {
             return false;
         }
 
-        Optional<String> cell = row.cell(columnIndex);
+        Optional<String> cell = row.getCell(columnIndex);
         String left = cell.orElse(null);
 
         if (operator == ComparisonOperator.EMPTY) {
