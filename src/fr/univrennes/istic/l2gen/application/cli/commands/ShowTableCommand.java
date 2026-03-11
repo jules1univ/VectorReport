@@ -55,8 +55,8 @@ public final class ShowTableCommand implements ICommand {
             Log.message("No header available for the current table.");
             return true;
         }
-        for (int i = 0; i < controller.getTable().header().get().cells().size(); i++) {
-            Optional<String> cell = controller.getTable().header().get().cell(i);
+        for (int i = 0; i < controller.getTable().header().get().getCells().size(); i++) {
+            Optional<String> cell = controller.getTable().header().get().getCell(i);
             Log.message("[%d]: %s", i, cell.orElse(CSVTable.DEFAULT_EMPTY_CELL));
         }
         return true;
@@ -81,9 +81,9 @@ public final class ShowTableCommand implements ICommand {
 
         int totalCols = 0;
         if (table.header().isPresent()) {
-            totalCols = table.header().get().cells().size();
+            totalCols = table.header().get().getCells().size();
         } else if (!table.rows().isEmpty()) {
-            totalCols = table.rows().get(0).cells().size();
+            totalCols = table.rows().get(0).getCells().size();
         }
         Log.message("Total Columns: %d", totalCols);
         // TODO: Add more summary information like column types, sample values, etc.

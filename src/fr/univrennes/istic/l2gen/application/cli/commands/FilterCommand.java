@@ -10,8 +10,8 @@ import fr.univrennes.istic.l2gen.application.core.filter.column.ColumnFilter;
 import fr.univrennes.istic.l2gen.application.core.filter.comparaison.ComparisonFilter;
 import fr.univrennes.istic.l2gen.application.core.filter.comparaison.ComparisonOperator;
 import fr.univrennes.istic.l2gen.application.core.filter.range.RangeFilter;
-import fr.univrennes.istic.l2gen.application.core.filter.type.FilterValueType;
 import fr.univrennes.istic.l2gen.application.core.filter.type.TypeFilter;
+import fr.univrennes.istic.l2gen.io.csv.model.CSVSubtype;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public final class FilterCommand implements ICommand {
@@ -85,13 +85,25 @@ public final class FilterCommand implements ICommand {
         if (args.length < 4) {
             Log.error("Missing arguments for type filter");
             Log.message("Usage: filter add type <col_index|col_name> <type>");
-            Log.message("Types: string, numeric, integer, floating, url, email, boolean, date, empty, notEmpty");
+            Log.message("Types: string, numeric, integer, floating, url, email, boolean, date, empty");
             return false;
         }
 
         try {
             int colIndex = this.getColumnIndex(controller.getTable(), args[2]);
-            FilterValueType valueType = FilterValueType.parse(args[3]);
+            String typeStr = args[3].toLowerCase();
+            CSVSubtype valueType = switch (typeStr) {
+                case "string" -> CSVSubtype.STRING;
+                case "numeric", "number" -> CSVSubtype.FLOATING;
+                case "integer" -> CSVSubtype.INTEGER;
+                case "floating" -> CSVSubtype.FLOATING;
+                case "url" -> CSVSubtype.URL;
+                case "email" -> CSVSubtype.EMAIL;
+                case "boolean" -> CSVSubtype.BOOLEAN;
+                case "date" -> CSVSubtype.DATE;
+                case "empty" -> CSVSubtype.EMPTY;
+                default -> throw new IllegalArgumentException("Unknown type: " + typeStr);
+            };
 
             IFilter filter = new TypeFilter(colIndex, valueType);
             controller.getFilter().add(filter);
@@ -293,7 +305,7 @@ public final class FilterCommand implements ICommand {
             return Integer.parseInt(colIdentifier);
         } catch (NumberFormatException e) {
             if (table.header().isPresent()) {
-                int index = table.header().get().cells().indexOf(Optional.of(colIdentifier));
+                int index = table.header().get().getCells().indexOf(Optional.of(colIdentifier));
                 if (index == -1) {
                     throw new IllegalArgumentException("Column not found: " + colIdentifier);
                 }

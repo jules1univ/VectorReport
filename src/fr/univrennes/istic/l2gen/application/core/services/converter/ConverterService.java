@@ -21,9 +21,9 @@ public class ConverterService implements IConverterService {
         DataSet data = new DataSet(label);
 
         for (CSVRow row : table.rows()) {
-            if (valColIndex < row.cells().size() && !row.cell(valColIndex).isEmpty()) {
+            if (valColIndex < row.getCells().size() && !row.getCell(valColIndex).isEmpty()) {
                 try {
-                    double value = Double.parseDouble(row.cell(valColIndex).get());
+                    double value = Double.parseDouble(row.getCell(valColIndex).get());
                     data.values().add(new Value(value, defaultColor));
                 } catch (NumberFormatException e) {
                 }
@@ -40,11 +40,11 @@ public class ConverterService implements IConverterService {
         DataSet data = new DataSet(label);
 
         for (CSVRow row : table.rows()) {
-            if (valueColIndex < row.cells().size() && labelColIndex < row.cells().size()
-                    && !row.cell(valueColIndex).isEmpty() && !row.cell(labelColIndex).isEmpty()) {
+            if (valueColIndex < row.getCells().size() && labelColIndex < row.getCells().size()
+                    && !row.getCell(valueColIndex).isEmpty() && !row.getCell(labelColIndex).isEmpty()) {
                 try {
-                    double value = Double.parseDouble(row.cell(valueColIndex).get());
-                    Color color = colorMap.getOrDefault(row.cell(labelColIndex).get(), defaultColor);
+                    double value = Double.parseDouble(row.getCell(valueColIndex).get());
+                    Color color = colorMap.getOrDefault(row.getCell(labelColIndex).get(), defaultColor);
 
                     data.values().add(new Value(value, color));
                 } catch (NumberFormatException e) {
@@ -64,11 +64,11 @@ public class ConverterService implements IConverterService {
         Map<String, List<Double>> categoryValues = new HashMap<>();
 
         for (CSVRow row : table.rows()) {
-            if (categoryColIndex < row.cells().size() && valueColIndex < row.cells().size()
-                    && !row.cell(categoryColIndex).isEmpty() && !row.cell(valueColIndex).isEmpty()) {
+            if (categoryColIndex < row.getCells().size() && valueColIndex < row.getCells().size()
+                    && !row.getCell(categoryColIndex).isEmpty() && !row.getCell(valueColIndex).isEmpty()) {
                 try {
-                    String category = row.cell(categoryColIndex).get();
-                    double value = Double.parseDouble(row.cell(valueColIndex).get());
+                    String category = row.getCell(categoryColIndex).get();
+                    double value = Double.parseDouble(row.getCell(valueColIndex).get());
 
                     categoryValues.computeIfAbsent(category, k -> new ArrayList<>()).add(value);
                 } catch (NumberFormatException e) {

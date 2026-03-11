@@ -34,7 +34,7 @@ public class LabelFilter implements IFilter {
         if (header == null) {
             throw new IllegalArgumentException("Header is required for column name filtering");
         }
-        int index = header.cells().indexOf(Optional.of(colName));
+        int index = header.getCells().indexOf(Optional.of(colName));
         if (index == -1) {
             throw new IllegalArgumentException("Column not found: " + colName);
         }
@@ -43,11 +43,11 @@ public class LabelFilter implements IFilter {
 
     @Override
     public boolean matches(CSVRow row, Optional<CSVRow> header) {
-        if (columnIndex < 0 || columnIndex >= row.cells().size()) {
+        if (columnIndex < 0 || columnIndex >= row.getCells().size()) {
             return false;
         }
 
-        Optional<String> cellValue = row.cell(columnIndex);
+        Optional<String> cellValue = row.getCell(columnIndex);
         if (!cellValue.isPresent()) {
             return false;
         }

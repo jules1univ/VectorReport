@@ -21,7 +21,7 @@ public final class MainView extends JFrame {
     public MainView(GUIController controller) {
         this.controller = controller;
 
-        this.tablePanel = new TablePanel();
+        this.tablePanel = new TablePanel(controller);
         this.panelY = new JScrollPane();
         this.panelZ = new JScrollPane();
 

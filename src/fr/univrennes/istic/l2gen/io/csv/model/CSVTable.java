@@ -47,21 +47,21 @@ public class CSVTable {
 
     public String rangeToString(int offset, int limit) {
         StringBuilder sb = new StringBuilder();
-        int columnCount = header.map(h -> h.cells().size())
-                .orElse(rows.isEmpty() ? 0 : rows.get(0).cells().size());
+        int columnCount = header.map(h -> h.getCells().size())
+                .orElse(rows.isEmpty() ? 0 : rows.get(0).getCells().size());
 
         int[] columnWidths = new int[columnCount];
 
         header.ifPresent(h -> {
-            for (int i = 0; i < h.cells().size(); i++) {
-                columnWidths[i] = Math.max(columnWidths[i], h.cells().get(i).orElse("").length());
+            for (int i = 0; i < h.getCells().size(); i++) {
+                columnWidths[i] = Math.max(columnWidths[i], h.getCells().get(i).orElse("").length());
             }
         });
 
         for (int i = offset; i < Math.min(rows.size(), offset + limit); i++) {
             CSVRow row = rows.get(i);
-            for (int j = 0; j < Math.min(row.cells().size(), columnCount); j++) {
-                columnWidths[j] = Math.max(columnWidths[j], row.cells().get(j).orElse("").length());
+            for (int j = 0; j < Math.min(row.getCells().size(), columnCount); j++) {
+                columnWidths[j] = Math.max(columnWidths[j], row.getCells().get(j).orElse("").length());
             }
         }
 
@@ -76,7 +76,7 @@ public class CSVTable {
             sb.append("|");
             CSVRow h = header.get();
             for (int i = 0; i < columnCount; i++) {
-                String value = i < h.cells().size() ? h.cells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL)
+                String value = i < h.getCells().size() ? h.getCells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL)
                         : CSVTable.DEFAULT_EMPTY_CELL;
                 sb.append(" ").append(centerString(value, columnWidths[i])).append(" |");
             }
@@ -91,7 +91,7 @@ public class CSVTable {
             }
             sb.append("|");
             for (int j = 0; j < columnCount; j++) {
-                String value = j < row.cells().size() ? row.cells().get(j).orElse("") : "";
+                String value = j < row.getCells().size() ? row.getCells().get(j).orElse("") : "";
                 sb.append(" ").append(centerString(value, columnWidths[j])).append(" |");
             }
             sb.append("\n");
@@ -104,14 +104,14 @@ public class CSVTable {
     public String columnToString(int colIndex, int offset, int limit) {
         StringBuilder sb = new StringBuilder();
         header.ifPresent(h -> {
-            if (colIndex < h.cells().size()) {
-                sb.append(h.cells().get(colIndex).orElse(CSVTable.DEFAULT_EMPTY_CELL)).append("\n");
+            if (colIndex < h.getCells().size()) {
+                sb.append(h.getCells().get(colIndex).orElse(CSVTable.DEFAULT_EMPTY_CELL)).append("\n");
             }
         });
         for (int i = offset; i < Math.min(rows.size(), offset + limit); i++) {
             CSVRow row = rows.get(i);
-            if (colIndex < row.cells().size()) {
-                sb.append(row.cells().get(colIndex).orElse(CSVTable.DEFAULT_EMPTY_CELL)).append("\n");
+            if (colIndex < row.getCells().size()) {
+                sb.append(row.getCells().get(colIndex).orElse(CSVTable.DEFAULT_EMPTY_CELL)).append("\n");
             }
         }
         return sb.toString();
@@ -124,8 +124,8 @@ public class CSVTable {
         if (header.isPresent()) {
             StringBuilder sb = new StringBuilder();
             CSVRow h = header.get();
-            for (int i = offset; i < Math.min(h.cells().size(), offset + limit); i++) {
-                String value = h.cells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL);
+            for (int i = offset; i < Math.min(h.getCells().size(), offset + limit); i++) {
+                String value = h.getCells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL);
                 sb.append(String.format("Column %d: %s\n", i, value));
             }
             sb.append("----\n");
@@ -134,8 +134,8 @@ public class CSVTable {
 
         CSVRow row = rows.get(rowIndex);
         StringBuilder sb = new StringBuilder();
-        for (int i = offset; i < Math.min(row.cells().size(), offset + limit); i++) {
-            String value = row.cells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL);
+        for (int i = offset; i < Math.min(row.getCells().size(), offset + limit); i++) {
+            String value = row.getCells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL);
             sb.append(String.format("Column %d: %s\n", i, value));
         }
         return sb.toString();

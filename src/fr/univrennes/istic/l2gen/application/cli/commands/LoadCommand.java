@@ -65,9 +65,9 @@ public final class LoadCommand implements ICommand {
             Log.message("Rows: %d", table.rows().size());
 
             if (table.header().isPresent()) {
-                Log.message("Columns: %d", table.header().get().cells().size());
+                Log.message("Columns: %d", table.header().get().getCells().size());
             } else if (!table.rows().isEmpty()) {
-                Log.message("Columns: %d", table.rows().get(0).cells().size());
+                Log.message("Columns: %d", table.rows().get(0).getCells().size());
             }
 
         } else {

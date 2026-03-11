@@ -26,6 +26,10 @@ public final class GUIController extends CoreController {
 
     }
 
+    public void onColumnSelected(int colIndex) {
+
+    }
+
     public void setCurrentView(LayoutType layout) {
 
     }
