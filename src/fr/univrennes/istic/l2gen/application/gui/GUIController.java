@@ -1,5 +1,12 @@
 package fr.univrennes.istic.l2gen.application.gui;
 
-public class GUIController {
+import fr.univrennes.istic.l2gen.application.core.CoreController;
+
+public final class GUIController extends CoreController {
+
+    @Override
+    public boolean init() {
+        throw new UnsupportedOperationException("Unimplemented method 'init'");
+    }
 
 }

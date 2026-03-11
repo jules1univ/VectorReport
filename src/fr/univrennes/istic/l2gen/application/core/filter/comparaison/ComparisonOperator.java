@@ -24,8 +24,8 @@ public enum ComparisonOperator {
             case "contains" -> CONTAINS;
             case "starts", "startswith" -> STARTS_WITH;
             case "ends", "endswith" -> ENDS_WITH;
-            case "empty", "isempty" -> EMPTY;
-            case "notempty", "isnotempty" -> NOT_EMPTY;
+            case "empty" -> EMPTY;
+            case "notempty" -> NOT_EMPTY;
             default -> throw new IllegalArgumentException("Unsupported comparison operator: " + value);
         };
     }
