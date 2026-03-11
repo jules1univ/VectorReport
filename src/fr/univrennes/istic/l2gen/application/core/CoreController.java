@@ -51,7 +51,7 @@ public abstract class CoreController {
         return this.currentTable;
     }
 
-    public final void setTable(CSVTable table) {
+    public void setTable(CSVTable table) {
         this.currentTable = table;
     }
 }

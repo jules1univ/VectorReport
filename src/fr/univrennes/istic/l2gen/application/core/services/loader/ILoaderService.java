@@ -19,6 +19,8 @@ public interface ILoaderService extends IService {
 
     public CSVTable getTable(File file);
 
+    public CSVTable getTable();
+
     public CSVTable getTableByName(String name);
 
     public List<File> getLoadedFiles();

@@ -5,6 +5,8 @@ import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
 import javax.swing.*;
 
+import com.formdev.flatlaf.FlatLightLaf;
+
 public final class GUIApp extends CoreApp<GUIController> {
 
     public GUIApp() {
@@ -25,9 +27,12 @@ public final class GUIApp extends CoreApp<GUIController> {
             return;
         }
 
+        FlatLightLaf.setup();
         SwingUtilities.invokeLater(() -> {
             MainView view = new MainView(controller);
             view.setVisible(true);
+
+            this.controller.setFrame(view);
         });
     }
 }

@@ -6,17 +6,23 @@ import fr.univrennes.istic.l2gen.application.gui.GUIController;
 
 public final class TopBar extends JMenuBar {
 
-    private GUIController controller;
+    private final GUIController controller;
 
     public TopBar(GUIController controller) {
+        this.controller = controller;
         this.build();
     }
 
     private void build() {
         JMenu file = new JMenu("File");
+
         JMenuItem openItem = new JMenuItem("Open");
         openItem.addActionListener(e -> controller.openFileOrFolder());
         file.add(openItem);
+
+        JMenuItem openUrlItem = new JMenuItem("Open URL");
+        openUrlItem.addActionListener(e -> controller.openUrl());
+        file.add(openUrlItem);
 
         JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> System.exit(0)); // TODO: better exit handling
