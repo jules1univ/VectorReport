@@ -1,6 +1,7 @@
 package fr.univrennes.istic.l2gen.application.core.services.filter;
 
 import fr.univrennes.istic.l2gen.application.core.filter.IFilter;
+import fr.univrennes.istic.l2gen.application.core.services.IService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
@@ -9,34 +10,29 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public class FilterService implements IFilterService {
+public final class FilterService implements IService {
 
     private final List<IFilter> filters = new ArrayList<>();
 
     public FilterService() {
     }
 
-    @Override
     public void add(IFilter filter) {
         this.filters.add(filter);
     }
 
-    @Override
     public void remove(IFilter filter) {
         this.filters.remove(filter);
     }
 
-    @Override
     public void clear() {
         this.filters.clear();
     }
 
-    @Override
     public List<IFilter> getAll() {
         return List.copyOf(this.filters);
     }
 
-    @Override
     public CSVTable apply(CSVTable table) {
         CSVTable copy = new CSVTable(table);
         for (IFilter filter : filters) {
@@ -45,15 +41,13 @@ public class FilterService implements IFilterService {
         return copy;
     }
 
-    @Override
     public CSVTable apply(IFilter filter, CSVTable table) {
         return filter.apply(new CSVTable(table));
     }
 
-    @Override
     public CSVTable removeEmptyRows(CSVTable table) {
-        CSVTable cleaned = new CSVTable(table.header().orElse(null), new ArrayList<>());
-        for (CSVRow row : table.rows()) {
+        CSVTable cleaned = new CSVTable(table.getHeader().orElse(null), new ArrayList<>());
+        for (CSVRow row : table.getRows()) {
             if (!isRowEmpty(row)) {
                 cleaned.addRow(row);
             }
@@ -61,9 +55,8 @@ public class FilterService implements IFilterService {
         return cleaned;
     }
 
-    @Override
     public CSVTable removeEmptyColumns(CSVTable table) {
-        int columnCount = table.header().map(CSVRow::size).orElseGet(() -> table.rows().stream()
+        int columnCount = table.getHeader().map(CSVRow::size).orElseGet(() -> table.getRows().stream()
                 .mapToInt(CSVRow::size)
                 .max()
                 .orElse(0));
@@ -71,11 +64,11 @@ public class FilterService implements IFilterService {
         boolean[] keepColumn = new boolean[columnCount];
 
         for (int i = 0; i < columnCount; i++) {
-            if (table.header().isPresent() && hasValue(table.header().get(), i)) {
+            if (table.getHeader().isPresent() && hasValue(table.getHeader().get(), i)) {
                 keepColumn[i] = true;
                 continue;
             }
-            for (CSVRow row : table.rows()) {
+            for (CSVRow row : table.getRows()) {
                 if (hasValue(row, i)) {
                     keepColumn[i] = true;
                     break;
@@ -83,23 +76,22 @@ public class FilterService implements IFilterService {
             }
         }
 
-        CSVRow newHeader = table.header().map(row -> projectRow(row, keepColumn)).orElse(null);
+        CSVRow newHeader = table.getHeader().map(row -> projectRow(row, keepColumn)).orElse(null);
         CSVTable result = new CSVTable(newHeader, new ArrayList<>());
 
-        for (CSVRow row : table.rows()) {
+        for (CSVRow row : table.getRows()) {
             result.addRow(projectRow(row, keepColumn));
         }
         return result;
     }
 
-    @Override
     public CSVTable sortByColumn(CSVTable table, int columnIndex, boolean ascending, boolean numeric) {
         CSVTable copy = new CSVTable(table);
         Comparator<CSVRow> comparator = (a, b) -> compareRows(a, b, columnIndex, numeric);
         if (!ascending) {
             comparator = comparator.reversed();
         }
-        copy.rows().sort(comparator);
+        copy.getRows().sort(comparator);
         return copy;
     }
 

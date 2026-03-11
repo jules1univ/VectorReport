@@ -11,7 +11,6 @@ import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
 import fr.univrennes.istic.l2gen.application.cli.util.parser.CommandParser;
 import fr.univrennes.istic.l2gen.application.cli.util.parser.ParsedCommand;
 import fr.univrennes.istic.l2gen.application.core.CoreController;
-import fr.univrennes.istic.l2gen.application.core.services.CoreServices;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,11 +23,6 @@ public final class CLIController extends CoreController {
     private final List<ICommand> commandList;
 
     public CLIController() {
-        this(CoreServices.defaultServices());
-    }
-
-    public CLIController(CoreServices services) {
-        super(services);
         this.commands = new HashMap<>();
         this.commandList = new ArrayList<>();
 

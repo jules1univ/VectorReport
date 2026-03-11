@@ -21,7 +21,14 @@ public final class CSVParser {
     private final boolean hasHeaders;
     private final boolean trimWhitespace;
 
-    public CSVParser(Character delimiter, char quoteChar, boolean hasHeaders, boolean trimWhitespace) {
+    public CSVParser(char quoteChar, boolean hasHeaders, boolean trimWhitespace) {
+        this.delimiter = null;
+        this.quoteChar = quoteChar;
+        this.hasHeaders = hasHeaders;
+        this.trimWhitespace = trimWhitespace;
+    }
+
+    public CSVParser(char delimiter, char quoteChar, boolean hasHeaders, boolean trimWhitespace) {
         this.delimiter = delimiter;
         this.quoteChar = quoteChar;
         this.hasHeaders = hasHeaders;

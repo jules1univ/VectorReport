@@ -11,9 +11,9 @@ public interface IFilter {
     public boolean matches(CSVRow row, Optional<CSVRow> header);
 
     public default CSVTable apply(CSVTable table) {
-        CSVTable filtered = new CSVTable(table.header().orElse(null), new ArrayList<>());
-        for (CSVRow row : table.rows()) {
-            if (this.matches(row, table.header())) {
+        CSVTable filtered = new CSVTable(table.getHeader().orElse(null), new ArrayList<>());
+        for (CSVRow row : table.getRows()) {
+            if (this.matches(row, table.getHeader())) {
                 filtered.addRow(row);
             }
         }

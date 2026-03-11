@@ -1,8 +1,10 @@
 package fr.univrennes.istic.l2gen.io.csv.model;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class CSVTable {
     public static final String DEFAULT_EMPTY_CELL = "(empty)";
@@ -25,24 +27,73 @@ public class CSVTable {
         this.rows = new ArrayList<>(other.rows);
     }
 
-    public Optional<CSVRow> header() {
+    public Optional<CSVRow> getHeader() {
         return header;
     }
 
-    public List<CSVRow> rows() {
+    public List<CSVRow> getRows() {
         return rows;
     }
 
-    public void setHeader(CSVRow header) {
-        this.header = Optional.ofNullable(header);
+    public CSVRow getRow(int index) {
+        return rows.get(index);
     }
 
     public void addRow(CSVRow row) {
         rows.add(row);
     }
 
-    public CSVRow row(int index) {
-        return rows.get(index);
+    public int getRowCount() {
+        return rows.size();
+    }
+
+    public CSVType getColumnType(int colIndex) {
+        return rows.isEmpty() ? CSVType.EMPTY : rows.get(0).getCellType(colIndex);
+    }
+
+    public CSVSubtype getColumnSubtype(int colIndex) {
+        return rows.isEmpty() ? CSVSubtype.EMPTY : rows.get(0).getCellSubtype(colIndex);
+    }
+
+    public CSVColumn<String> getColumn(int colIndex) {
+        CSVSubtype subtype = this.getColumnSubtype(colIndex);
+        String[] cells = new String[rows.size()];
+        for (int i = 0; i < rows.size(); i++) {
+            CSVRow row = rows.get(i);
+            cells[i] = row.getCell(colIndex).orElse(null);
+        }
+        return new CSVColumn<>(subtype, cells);
+    }
+
+    public <T> CSVColumn<T> getTypedColumn(int colIndex, Function<String, T> parser, Class<T> type) {
+        CSVSubtype subtype = this.getColumnSubtype(colIndex);
+        @SuppressWarnings("unchecked")
+        T[] cells = (T[]) Array.newInstance(type, rows.size());
+
+        for (int i = 0; i < rows.size(); i++) {
+            CSVRow row = rows.get(i);
+            String value = row.getCell(colIndex).orElse(null);
+            try {
+                cells[i] = value == null ? null : parser.apply(value);
+            } catch (Exception e) {
+                cells[i] = null;
+            }
+        }
+        return new CSVColumn<>(subtype, cells);
+    }
+
+    public int getColumnCount() {
+        if (header.isPresent()) {
+            return header.get().getCells().size();
+        } else if (!rows.isEmpty()) {
+            return rows.get(0).getCells().size();
+        } else {
+            return 0;
+        }
+    }
+
+    public void setHeader(CSVRow header) {
+        this.header = Optional.ofNullable(header);
     }
 
     public String rangeToString(int offset, int limit) {

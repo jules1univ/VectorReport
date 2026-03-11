@@ -1,5 +1,7 @@
 package fr.univrennes.istic.l2gen.application.core.services.report;
 
-public class ReportService implements IReportService {
+import fr.univrennes.istic.l2gen.application.core.services.IService;
+
+public class ReportService implements IService {
     // TODO
 }

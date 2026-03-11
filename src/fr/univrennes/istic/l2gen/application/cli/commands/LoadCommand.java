@@ -2,11 +2,8 @@ package fr.univrennes.istic.l2gen.application.cli.commands;
 
 import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
 import fr.univrennes.istic.l2gen.application.core.CoreController;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
-
 import java.io.File;
 import java.net.URI;
-import java.util.List;
 
 public final class LoadCommand implements ICommand {
 
@@ -20,62 +17,27 @@ public final class LoadCommand implements ICommand {
 
         String filePath = args[0];
 
-        Character delimiter = null;
-        boolean hasHeaders = true;
+        boolean hasHeaders = args.length > 1 && !args[1].equalsIgnoreCase("--no-headers");
 
-        for (int i = 1; i < args.length; i++) {
-            if (args[i].equals("-d") && i + 1 < args.length) {
-                delimiter = args[i + 1].charAt(0);
-                i++;
-            } else if (args[i].equals("--no-headers")) {
-                hasHeaders = false;
-            }
-        }
-
-        boolean success;
         File file = new File(filePath);
+        int totalImported = 0;
 
         long startTime = System.currentTimeMillis();
         if (file.isFile()) {
-            success = controller.getLoader().loadFile(file, delimiter, hasHeaders);
+            totalImported += controller.getLoader().loadFile(file, hasHeaders).size();
         } else if (file.isDirectory()) {
-            success = controller.getLoader().loadFolder(file, delimiter, hasHeaders);
+            totalImported += controller.getLoader().loadFolder(file, hasHeaders).size();
         } else {
             try {
-                success = controller.getLoader().loadUrl(URI.create(filePath), delimiter, hasHeaders);
+                totalImported += controller.getLoader().loadUrl(URI.create(filePath), hasHeaders).size();
             } catch (Exception e) {
                 Log.error(e, "Invalid source: %s", filePath);
                 return false;
             }
         }
         long endTime = System.currentTimeMillis();
-        Log.message("Loading completed in %d ms", (endTime - startTime));
-
-        List<CSVTable> tables = controller.getLoader().getLatestLoadedTables();
-        if (!success || tables.isEmpty()) {
-            Log.message("No tables loaded from: %s", filePath);
-            return false;
-        }
-
-        if (tables.size() == 1) {
-            CSVTable table = tables.get(0);
-            controller.setTable(table);
-
-            Log.message("Successfully loaded: %s", filePath);
-            Log.message("Rows: %d", table.rows().size());
-
-            if (table.header().isPresent()) {
-                Log.message("Columns: %d", table.header().get().getCells().size());
-            } else if (!table.rows().isEmpty()) {
-                Log.message("Columns: %d", table.rows().get(0).getCells().size());
-            }
-
-        } else {
-            controller.setTable(tables.get(0));
-            Log.message("Successfully loaded %d tables from folder: %s", tables.size(), filePath);
-        }
-
-        return success;
+        Log.message("Loaded %d tables in %.2f seconds", totalImported, (endTime - startTime) / 1000.0);
+        return true;
     }
 
     @Override
@@ -90,6 +52,6 @@ public final class LoadCommand implements ICommand {
 
     @Override
     public String getUsage() {
-        return "load <file|folder|url> [-d <delimiter>] [--no-headers]";
+        return "load <file|folder|url> [--no-headers]";
     }
 }

@@ -32,7 +32,7 @@ public final class GUIApp extends CoreApp<GUIController> {
             MainView view = new MainView(controller);
             view.setVisible(true);
 
-            this.controller.setFrame(view);
+            this.controller.setMainView(view);
         });
     }
 }

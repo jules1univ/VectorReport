@@ -15,116 +15,152 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
+import fr.univrennes.istic.l2gen.application.core.services.IService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 import fr.univrennes.istic.l2gen.io.csv.parser.CSVParseException;
 import fr.univrennes.istic.l2gen.io.csv.parser.CSVParser;
 
-public final class LoaderService implements ILoaderService {
+public final class LoaderService implements IService {
 
-    private final Map<File, CSVTable> loadedTables = new LinkedHashMap<>();
-    private List<CSVTable> lastLoaded = new ArrayList<>();
+    private final Map<String, CSVTable> tables = new LinkedHashMap<>();
 
     public LoaderService() {
     }
 
-    @Override
-    public boolean loadFolder(File folder, Character delimiter, boolean hasHeader) {
-        if (!folder.isDirectory())
-            return false;
+    public List<String> getTablesName() {
+        return new ArrayList<>(this.tables.keySet());
+    }
+
+    public CSVTable getTable(String key) {
+        return this.tables.get(key);
+    }
+
+    public String getName(CSVTable table) {
+        for (Map.Entry<String, CSVTable> entry : tables.entrySet()) {
+            if (entry.getValue() == table) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public List<String> loadFolder(File folder, boolean hasHeader) {
+        if (!folder.isDirectory()) {
+            return new ArrayList<>();
+        }
 
         File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
-        if (files == null)
-            return false;
+        if (files == null) {
+            return new ArrayList<>();
+        }
 
-        this.lastLoaded = new ArrayList<>();
-        boolean allSuccess = true;
+        List<String> paths = new ArrayList<>();
         for (File file : files) {
-            if (!parseAndStore(file, new CSVParser(delimiter, '"', hasHeader, true))) {
-                allSuccess = false;
+            if (!parseFile(file, hasHeader)) {
+                paths.add(file.getAbsolutePath());
             }
         }
-        return allSuccess;
+        return paths;
     }
 
-    @Override
-    public boolean loadFile(File file, Character delimiter, boolean hasHeader) {
-        CSVParser parser = new CSVParser(delimiter, '"', hasHeader, true);
-        this.lastLoaded.clear();
-
+    public List<String> loadFile(File file, boolean hasHeader) {
         if (file.getName().toLowerCase().endsWith(".zip")) {
-            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-                return parseZip(zis, parser);
-            } catch (IOException e) {
-                Log.error(e, "Error reading ZIP file: %s", file.getAbsolutePath());
-                return false;
-            }
+            return parseZip(file, hasHeader);
         }
 
-        return parseAndStore(file, parser);
+        if (parseFile(file, hasHeader)) {
+            return List.of(file.getAbsolutePath());
+        }
+        return new ArrayList<>();
     }
 
-    @Override
-    public boolean loadUrl(URI url, Character delimiter, boolean hasHeader) {
-        CSVParser parser = new CSVParser(delimiter, '"', hasHeader, true);
+    public List<String> loadUrl(URI url, boolean hasHeader) {
+        URLConnection connection;
         try {
-            URLConnection connection = url.toURL().openConnection();
+            connection = url.toURL().openConnection();
+
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
 
             String contentType = connection.getContentType();
             if (contentType != null && contentType.equals("application/zip")) {
-                try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(connection.getInputStream()))) {
-                    return parseZip(zis, parser);
-                }
+                return parseZip(connection, hasHeader);
             }
 
             try (Reader reader = new InputStreamReader(
                     new BufferedInputStream(connection.getInputStream()), StandardCharsets.UTF_8)) {
+                CSVParser parser = new CSVParser('"', hasHeader, true);
+
                 CSVTable table = parser.parse(reader);
-                this.lastLoaded.clear();
-                this.lastLoaded.add(table);
-                this.loadedTables.put(new File(url.getPath()), table);
-                return true;
+                this.tables.put(url.toString(), table);
+                return List.of(url.toString());
             }
         } catch (Exception e) {
-            Log.error(e, "Error loading URL: %s", url);
-            return false;
+            Log.error(e, "Failed to load CSV from URL: %s", url);
+            return new ArrayList<>();
+
         }
     }
 
-    private boolean parseZip(ZipInputStream zis, CSVParser parser) throws IOException {
-        ZipEntry entry;
-        while ((entry = zis.getNextEntry()) != null) {
-            if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".csv")) {
-                InputStream entryStream = new FilterInputStream(zis) {
-                    @Override
-                    public void close() {
+    private List<String> parseZip(InputStream inputStream, Function<String, String> keyMapper, boolean hasHeader) {
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream))) {
+            CSVParser parser = new CSVParser('"', hasHeader, true);
+            List<String> paths = new ArrayList<>();
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".csv")) {
+                    InputStream entryStream = new FilterInputStream(zis) {
+                        @Override
+                        public void close() {
+                        }
+                    };
+                    try {
+                        CSVTable table = parser.parse(new InputStreamReader(entryStream));
+                        String key = keyMapper.apply(entry.getName());
+                        this.tables.put(key, table);
+                        paths.add(key);
+                    } catch (CSVParseException e) {
+                        Log.error(e, "Invalid CSV format in ZIP entry: %s", entry.getName());
                     }
-                };
-                try {
-                    CSVTable table = parser.parse(new InputStreamReader(entryStream));
-                    File pseudoFile = new File(entry.getName());
-                    this.loadedTables.put(pseudoFile, table);
-                    this.lastLoaded.add(table);
-                } catch (CSVParseException e) {
-                    Log.error(e, "Invalid CSV format in ZIP entry: %s", entry.getName());
-                    return false;
                 }
+                zis.closeEntry();
             }
-            zis.closeEntry();
+            return paths;
+        } catch (IOException e) {
+            Log.error(e, "Failed to parse ZIP archive");
+            return new ArrayList<>();
         }
-        return true;
     }
 
-    private boolean parseAndStore(File file, CSVParser parser) {
+    private List<String> parseZip(File base, boolean hasHeader) {
         try {
-            CSVTable table = parser.parse(file);
-            this.loadedTables.put(file, table);
-            this.lastLoaded.add(table);
+            return parseZip(new FileInputStream(base),
+                    name -> base.getAbsolutePath() + "!" + name, hasHeader);
+        } catch (IOException e) {
+            Log.error(e, "Failed to parse ZIP archive: %s", base.getAbsolutePath());
+            return new ArrayList<>();
+        }
+    }
+
+    private List<String> parseZip(URLConnection connection, boolean hasHeader) {
+        try {
+            return parseZip(connection.getInputStream(),
+                    name -> name, hasHeader);
+        } catch (IOException e) {
+            Log.error(e, "Failed to parse ZIP archive from URL: %s", connection.getURL());
+            return new ArrayList<>();
+        }
+    }
+
+    private boolean parseFile(File file, boolean hasHeader) {
+        try {
+            CSVTable table = new CSVParser('"', hasHeader, true).parse(file);
+            this.tables.put(file.getAbsolutePath(), table);
             return true;
         } catch (CSVParseException e) {
             Log.error(e, "Invalid CSV format in file: %s", file.getAbsolutePath());
@@ -132,37 +168,4 @@ public final class LoaderService implements ILoaderService {
         }
     }
 
-    @Override
-    public List<CSVTable> getLatestLoadedTables() {
-        return List.copyOf(this.lastLoaded);
-    }
-
-    @Override
-    public CSVTable getTable(File file) {
-        return this.loadedTables.get(file);
-    }
-
-    @Override
-    public CSVTable getTable() {
-        return this.lastLoaded.isEmpty() ? null : this.lastLoaded.get(this.lastLoaded.size() - 1);
-    }
-
-    @Override
-    public CSVTable getTableByName(String name) {
-        return this.loadedTables.entrySet().stream()
-                .filter(entry -> entry.getKey().getName().equals(name))
-                .map(Map.Entry::getValue)
-                .findFirst()
-                .orElse(null);
-    }
-
-    @Override
-    public List<File> getLoadedFiles() {
-        return this.loadedTables.keySet().stream().toList();
-    }
-
-    @Override
-    public List<String> getLoadedFileNames() {
-        return this.loadedTables.keySet().stream().map(File::getName).toList();
-    }
 }

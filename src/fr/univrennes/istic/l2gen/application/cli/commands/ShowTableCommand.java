@@ -51,12 +51,12 @@ public final class ShowTableCommand implements ICommand {
     }
 
     private boolean showHeader(CoreController controller) {
-        if (controller.getTable().header().isEmpty()) {
+        if (controller.getTable().getHeader().isEmpty()) {
             Log.message("No header available for the current table.");
             return true;
         }
-        for (int i = 0; i < controller.getTable().header().get().getCells().size(); i++) {
-            Optional<String> cell = controller.getTable().header().get().getCell(i);
+        for (int i = 0; i < controller.getTable().getHeader().get().getCells().size(); i++) {
+            Optional<String> cell = controller.getTable().getHeader().get().getCell(i);
             Log.message("[%d]: %s", i, cell.orElse(CSVTable.DEFAULT_EMPTY_CELL));
         }
         return true;
@@ -64,9 +64,9 @@ public final class ShowTableCommand implements ICommand {
 
     private boolean showTable(CoreController controller) {
         CSVTable table = controller.getTable();
-        if (table.rows().size() > 25) {
+        if (table.getRows().size() > 25) {
             Log.log(LogLevel.WARNING, "Table is too large to display fully (%d rows). Showing first 25 rows instead.",
-                    table.rows().size());
+                    table.getRows().size());
             Log.message(table.rangeToString(0, 25));
         } else {
             Log.message(table.toString());
@@ -77,13 +77,13 @@ public final class ShowTableCommand implements ICommand {
     private boolean showSummary(CoreController controller) {
         CSVTable table = controller.getTable();
         Log.message("Table Summary:");
-        Log.message("Total Rows: %d", table.rows().size());
+        Log.message("Total Rows: %d", table.getRows().size());
 
         int totalCols = 0;
-        if (table.header().isPresent()) {
-            totalCols = table.header().get().getCells().size();
-        } else if (!table.rows().isEmpty()) {
-            totalCols = table.rows().get(0).getCells().size();
+        if (table.getHeader().isPresent()) {
+            totalCols = table.getHeader().get().getCells().size();
+        } else if (!table.getRows().isEmpty()) {
+            totalCols = table.getRows().get(0).getCells().size();
         }
         Log.message("Total Columns: %d", totalCols);
         // TODO: Add more summary information like column types, sample values, etc.

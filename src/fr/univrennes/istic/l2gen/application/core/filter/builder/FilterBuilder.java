@@ -147,8 +147,8 @@ public final class FilterBuilder {
         try {
             return Integer.parseInt(identifier);
         } catch (NumberFormatException e) {
-            if (table.header().isPresent()) {
-                CSVRow hdr = table.header().get();
+            if (table.getHeader().isPresent()) {
+                CSVRow hdr = table.getHeader().get();
                 int idx = hdr.getCells().indexOf(Optional.of(identifier));
                 if (idx == -1) {
                     throw new IllegalArgumentException("Column not found: " + identifier);

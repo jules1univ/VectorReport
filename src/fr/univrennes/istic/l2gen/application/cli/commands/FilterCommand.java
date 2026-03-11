@@ -238,7 +238,7 @@ public final class FilterCommand implements ICommand {
         CSVTable filtered = controller.getFilter().apply(controller.getTable());
         controller.setTable(filtered);
         Log.message("Filters applied");
-        Log.message("Rows after filtering: %d", filtered.rows().size());
+        Log.message("Rows after filtering: %d", filtered.getRows().size());
         return true;
     }
 
@@ -296,7 +296,7 @@ public final class FilterCommand implements ICommand {
         }
 
         controller.setTable(result);
-        Log.message("Cleanup applied. Rows: %d", result.rows().size());
+        Log.message("Cleanup applied. Rows: %d", result.getRows().size());
         return true;
     }
 
@@ -304,8 +304,8 @@ public final class FilterCommand implements ICommand {
         try {
             return Integer.parseInt(colIdentifier);
         } catch (NumberFormatException e) {
-            if (table.header().isPresent()) {
-                int index = table.header().get().getCells().indexOf(Optional.of(colIdentifier));
+            if (table.getHeader().isPresent()) {
+                int index = table.getHeader().get().getCells().indexOf(Optional.of(colIdentifier));
                 if (index == -1) {
                     throw new IllegalArgumentException("Column not found: " + colIdentifier);
                 }

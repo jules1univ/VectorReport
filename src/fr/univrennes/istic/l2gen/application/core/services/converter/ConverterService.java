@@ -1,5 +1,6 @@
 package fr.univrennes.istic.l2gen.application.core.services.converter;
 
+import fr.univrennes.istic.l2gen.application.core.services.IService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 import fr.univrennes.istic.l2gen.svg.color.Color;
@@ -13,14 +14,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ConverterService implements IConverterService {
+public final class ConverterService implements IService {
 
-    @Override
+    public ConverterService() {
+    }
+
     public DataSet createDataSet(CSVTable table, int valColIndex, String title, Color defaultColor) {
         Label label = new Label(title);
         DataSet data = new DataSet(label);
 
-        for (CSVRow row : table.rows()) {
+        for (CSVRow row : table.getRows()) {
             if (valColIndex < row.getCells().size() && !row.getCell(valColIndex).isEmpty()) {
                 try {
                     double value = Double.parseDouble(row.getCell(valColIndex).get());
@@ -32,14 +35,13 @@ public class ConverterService implements IConverterService {
         return data;
     }
 
-    @Override
     public DataSet createDataSet(CSVTable table, int valueColIndex, int labelColIndex, String title,
             Map<String, Color> colorMap, Color defaultColor) {
 
         Label label = new Label(title);
         DataSet data = new DataSet(label);
 
-        for (CSVRow row : table.rows()) {
+        for (CSVRow row : table.getRows()) {
             if (valueColIndex < row.getCells().size() && labelColIndex < row.getCells().size()
                     && !row.getCell(valueColIndex).isEmpty() && !row.getCell(labelColIndex).isEmpty()) {
                 try {
@@ -55,7 +57,6 @@ public class ConverterService implements IConverterService {
         return data;
     }
 
-    @Override
     public DataSet createSummaryDataSet(CSVTable table, int categoryColIndex, int valueColIndex, String title,
             SummaryType type) {
         Label label = new Label(title);
@@ -63,7 +64,7 @@ public class ConverterService implements IConverterService {
 
         Map<String, List<Double>> categoryValues = new HashMap<>();
 
-        for (CSVRow row : table.rows()) {
+        for (CSVRow row : table.getRows()) {
             if (categoryColIndex < row.getCells().size() && valueColIndex < row.getCells().size()
                     && !row.getCell(categoryColIndex).isEmpty() && !row.getCell(valueColIndex).isEmpty()) {
                 try {
@@ -86,7 +87,6 @@ public class ConverterService implements IConverterService {
         return data;
     }
 
-    @Override
     public DataGroup createDataGroup(List<CSVTable> tables, int valueColIndex, int labelColIndex, String title,
             Map<String, Color> colorMap, Color defaultColor) {
 
@@ -100,7 +100,6 @@ public class ConverterService implements IConverterService {
         return group;
     }
 
-    @Override
     public DataGroup createSummaryDataGroup(List<CSVTable> tables, int categoryColIndex, int valueColIndex,
             String title,
             SummaryType type) {

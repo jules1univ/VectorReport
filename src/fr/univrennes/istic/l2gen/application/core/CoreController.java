@@ -1,57 +1,57 @@
 package fr.univrennes.istic.l2gen.application.core;
 
-import fr.univrennes.istic.l2gen.application.core.services.CoreServices;
-import fr.univrennes.istic.l2gen.application.core.services.chart.IChartService;
-import fr.univrennes.istic.l2gen.application.core.services.converter.IConverterService;
-import fr.univrennes.istic.l2gen.application.core.services.filter.IFilterService;
-import fr.univrennes.istic.l2gen.application.core.services.loader.ILoaderService;
-import fr.univrennes.istic.l2gen.application.core.services.report.IReportService;
+import fr.univrennes.istic.l2gen.application.core.services.chart.ChartService;
+import fr.univrennes.istic.l2gen.application.core.services.converter.ConverterService;
+import fr.univrennes.istic.l2gen.application.core.services.filter.FilterService;
+import fr.univrennes.istic.l2gen.application.core.services.loader.LoaderService;
+import fr.univrennes.istic.l2gen.application.core.services.report.ReportService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public abstract class CoreController {
 
-    private final CoreServices services;
-    private CSVTable currentTable;
+    private CSVTable table;
+
+    private final ChartService chart;
+    private final ConverterService converter;
+    private final FilterService filter;
+    private final LoaderService loader;
+    private final ReportService report;
 
     protected CoreController() {
-        this(CoreServices.defaultServices());
+        this.chart = new ChartService();
+        this.converter = new ConverterService();
+        this.filter = new FilterService();
+        this.loader = new LoaderService();
+        this.report = new ReportService();
     }
 
-    protected CoreController(CoreServices services) {
-        this.services = services;
+    public LoaderService getLoader() {
+        return this.loader;
     }
 
-    public ILoaderService getLoader() {
-        return this.services.loader();
+    public ConverterService getConverter() {
+        return this.converter;
     }
 
-    public IFilterService getFilter() {
-        return this.services.filter();
+    public FilterService getFilter() {
+        return this.filter;
     }
 
-    public IConverterService getConverter() {
-        return this.services.converter();
+    public ChartService getChart() {
+        return this.chart;
     }
 
-    public IChartService getChart() {
-        return this.services.chart();
-    }
-
-    public IReportService getReport() {
-        return this.services.report();
-    }
-
-    public final <T> T getService(Class<T> contract) {
-        return this.services.get(contract);
+    public ReportService getReport() {
+        return this.report;
     }
 
     public abstract boolean init();
 
     public final CSVTable getTable() {
-        return this.currentTable;
+        return this.table;
     }
 
     public void setTable(CSVTable table) {
-        this.currentTable = table;
+        this.table = table;
     }
 }

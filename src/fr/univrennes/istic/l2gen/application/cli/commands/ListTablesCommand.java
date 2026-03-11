@@ -1,6 +1,5 @@
 package fr.univrennes.istic.l2gen.application.cli.commands;
 
-import java.io.File;
 import java.util.List;
 
 import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
@@ -10,16 +9,16 @@ public final class ListTablesCommand implements ICommand {
 
     @Override
     public boolean execute(CoreController controller, String[] args) {
-        List<File> files = controller.getLoader().getLoadedFiles();
-        if (files.isEmpty()) {
+        List<String> names = controller.getLoader().getTablesName();
+        if (names.isEmpty()) {
             Log.message("No tables loaded.");
             return true;
         }
 
         Log.message("Loaded tables:");
-        for (File file : files) {
-            int rows = controller.getLoader().getTable(file).rows().size();
-            Log.message("  - %s (%d rows)", file.getAbsolutePath(), rows);
+        for (String name : names) {
+            int rows = controller.getLoader().getTable(name).getRows().size();
+            Log.message("  - %s (%d rows)", name, rows);
         }
         return true;
     }

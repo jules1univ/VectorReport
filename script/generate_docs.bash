@@ -8,9 +8,7 @@ DOC_DIR="doc"
 mkdir -p "$DOC_DIR"
 echo "Génération de la JavaDoc depuis '$SRC_DIR' vers '$DOC_DIR'..."
 
-javadoc -d "$DOC_DIR" \
-        -sourcepath "$SRC_DIR" \
-        -subpackages fr
+javadoc -d "$DOC_DIR" -sourcepath "$SRC_DIR" -subpackages fr
 
 if [ $? -eq 0 ]; then
     echo "Documentation générée avec succès dans le dossier '$DOC_DIR' !"
