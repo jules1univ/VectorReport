@@ -13,7 +13,7 @@ public class VectorReport {
 
     public static void main(String[] args) throws Exception {
         CoreApp<?> app;
-        if (args.length > 0) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("--cli")) {
             app = new CLIApp();
         } else {
             app = new GUIApp();
