@@ -23,6 +23,17 @@ public final class TypeFilter implements IFilter {
         this.valueType = valueType;
     }
 
+    public static TypeFilter name(String colName, FilterValueType valueType, Optional<CSVRow> header) {
+        if (header == null || header.isEmpty()) {
+            throw new IllegalArgumentException("Header is required for column name filtering");
+        }
+        int idx = header.get().cells().indexOf(Optional.of(colName));
+        if (idx == -1) {
+            throw new IllegalArgumentException("Column not found: " + colName);
+        }
+        return new TypeFilter(idx, valueType);
+    }
+
     @Override
     public boolean matches(CSVRow row, Optional<CSVRow> header) {
         if (columnIndex < 0 || columnIndex >= row.size()) {
@@ -140,10 +151,5 @@ public final class TypeFilter implements IFilter {
         } catch (DateTimeParseException e) {
             return false;
         }
-    }
-
-    @Override
-    public String toString() {
-        return String.format("TypeFilter(column=%d, type=%s)", columnIndex, valueType.name().toLowerCase());
     }
 }

@@ -26,6 +26,18 @@ public final class ComparisonFilter implements IFilter {
         this.ignoreCase = ignoreCase;
     }
 
+    public static ComparisonFilter name(String colName, ComparisonOperator operator, String expectedValue,
+            Optional<CSVRow> header) {
+        if (header == null || header.isEmpty()) {
+            throw new IllegalArgumentException("Header is required for column name filtering");
+        }
+        int index = header.get().cells().indexOf(Optional.of(colName));
+        if (index == -1) {
+            throw new IllegalArgumentException("Column not found: " + colName);
+        }
+        return new ComparisonFilter(index, operator, expectedValue);
+    }
+
     @Override
     public boolean matches(CSVRow row, Optional<CSVRow> header) {
         if (columnIndex < 0 || columnIndex >= row.size()) {
