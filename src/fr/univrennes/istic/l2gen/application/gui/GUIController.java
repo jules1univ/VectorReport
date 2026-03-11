@@ -2,6 +2,7 @@ package fr.univrennes.istic.l2gen.application.gui;
 
 import fr.univrennes.istic.l2gen.application.core.CoreController;
 import fr.univrennes.istic.l2gen.application.core.services.CoreServices;
+import fr.univrennes.istic.l2gen.application.gui.main.LayoutType;
 
 public final class GUIController extends CoreController {
 
@@ -18,4 +19,22 @@ public final class GUIController extends CoreController {
         return true;
     }
 
+    public void openFileOrFolder() {
+    }
+
+    public void refreshView() {
+
+    }
+
+    public void setCurrentView(LayoutType layout) {
+
+    }
+
+    public void openDocumentation() {
+
+    }
+
+    public void openAbout() {
+
+    }
 }

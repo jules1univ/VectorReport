@@ -25,7 +25,7 @@ public final class MainView extends JFrame {
         this.panelY = new JScrollPane();
         this.panelZ = new JScrollPane();
 
-        this.topBar = new TopBar();
+        this.topBar = new TopBar(controller);
         this.bottomBar = new BottomBar();
         build();
     }
@@ -40,10 +40,10 @@ public final class MainView extends JFrame {
 
         add(bottomBar, BorderLayout.SOUTH);
 
-        JSplitPane topSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelY, tablePanel);
+        JSplitPane topSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelY, panelZ);
         topSplit.setResizeWeight(0.5);
 
-        JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topSplit, panelZ);
+        JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topSplit, tablePanel);
         mainSplit.setResizeWeight(0.7);
 
         add(mainSplit, BorderLayout.CENTER);
