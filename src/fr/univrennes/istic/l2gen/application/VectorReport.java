@@ -3,6 +3,8 @@ package fr.univrennes.istic.l2gen.application;
 import java.lang.management.ManagementFactory;
 
 import fr.univrennes.istic.l2gen.application.cli.CLIApp;
+import fr.univrennes.istic.l2gen.application.core.CoreApp;
+import fr.univrennes.istic.l2gen.application.gui.GUIApp;
 
 public class VectorReport {
 
@@ -10,6 +12,13 @@ public class VectorReport {
             .indexOf("-agentlib:jdwp") > 0;
 
     public static void main(String[] args) throws Exception {
-        new CLIApp().start();
+        CoreApp<?> app;
+        if (args.length > 0) {
+            app = new CLIApp();
+        } else {
+            app = new GUIApp();
+        }
+
+        app.start();
     }
 }
