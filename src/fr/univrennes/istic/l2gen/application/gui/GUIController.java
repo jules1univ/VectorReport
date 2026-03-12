@@ -2,9 +2,9 @@ package fr.univrennes.istic.l2gen.application.gui;
 
 import java.io.File;
 import java.net.URI;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -12,9 +12,9 @@ import javax.swing.SwingWorker;
 import com.formdev.flatlaf.util.SystemFileChooser;
 
 import fr.univrennes.istic.l2gen.application.core.CoreController;
-import fr.univrennes.istic.l2gen.application.gui.main.LayoutType;
+import fr.univrennes.istic.l2gen.application.core.services.filter.FilterCondition;
+import fr.univrennes.istic.l2gen.application.core.services.stats.CorrelationType;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVColumn;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVType;
 
@@ -25,13 +25,8 @@ public final class GUIController extends CoreController {
     public GUIController() {
     }
 
-    @Override
-    public boolean init() {
-        return true;
-    }
-
     public void setMainView(MainView frame) {
-        this.mainView = frame;
+        mainView = frame;
     }
 
     public MainView getMainView() {
@@ -47,7 +42,7 @@ public final class GUIController extends CoreController {
         }
 
         File[] files = fileChooser.getSelectedFiles();
-        this.setLoading(true);
+        setLoading(true);
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -88,8 +83,8 @@ public final class GUIController extends CoreController {
             try {
                 URI uri = URI.create(url);
 
-                this.setLoading(true);
-                this.setStatus("Loading from URL: " + uri);
+                setLoading(true);
+                setStatus("Loading from URL: " + uri);
 
                 new SwingWorker<Void, Void>() {
                     @Override
@@ -117,12 +112,214 @@ public final class GUIController extends CoreController {
         }
     }
 
-    public void refreshView() {
+    public void openDocumentationDialog() {
 
     }
 
-    public void setCurrentView(LayoutType layout) {
+    public void openAboutDialog() {
 
+    }
+
+    public void onFilterByCategoryRequested(int columnIndex, boolean percentage) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+
+        setLoading(true);
+
+        new SwingWorker<CSVTable, Void>() {
+            @Override
+            protected CSVTable doInBackground() throws Exception {
+                return getFilter().filterByCategory(table, columnIndex, percentage);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    setTable(get());
+                } catch (InterruptedException | ExecutionException exception) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    setLoading(false);
+                }
+            }
+        }.execute();
+    }
+
+    public void onMultiColumnCorrelationRequested(int columnIndex, List<Integer> targetColumnIndices) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+
+    }
+
+    public void onCorrelationRequested(int columnIndex, int targetColIndex, CorrelationType type) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+        setLoading(true);
+        new SwingWorker<Double, Void>() {
+            @Override
+            protected Double doInBackground() throws Exception {
+                return getStats().getCorrelation(table, columnIndex, targetColIndex, type);
+            }
+
+            @Override
+            protected void done() {
+                setLoading(false);
+
+                try {
+                    double correlation = get();
+                    String message = String.format("Between %s and %s: %.4f",
+                            table.getColumnName(columnIndex).orElse("(unknown)").toLowerCase(),
+                            table.getColumnName(targetColIndex).orElse("(unknown)").toLowerCase(),
+                            correlation);
+
+                    JOptionPane.showMessageDialog(mainView, message,
+                            String.format("Correlation (%s)", type.name().toLowerCase()),
+                            JOptionPane.INFORMATION_MESSAGE);
+                } catch (InterruptedException | ExecutionException exception) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                }
+            }
+        }.execute();
+    }
+
+    public void onValueDistributionRequested(int columnIndex) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+    }
+
+    public void onFilterByValueRequested(int columnIndex, String value) {
+    }
+
+    public void onFilterTopNRequested(int columnIndex, int n, boolean top) {
+    }
+
+    public void onFilterByRangeRequested(int columnIndex, double min, double max) {
+    }
+
+    public void onFilterEmptyRequested(int columnIndex) {
+    }
+
+    public void onTableSaveRequested() {
+    }
+
+    public void onFilterRequested(List<FilterCondition> conditions) {
+    }
+
+    public void onFilterCleared(int columnIndex) {
+    }
+
+    public void onColumnRemoveRequested(int columnIndex) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+        CSVTable copy = new CSVTable(table);
+        copy.removeColumn(columnIndex);
+        setTable(copy);
+    }
+
+    public void onColumnTypeChangeRequested(int columnIndex, CSVType newType) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+        table.getColumn(columnIndex).setType(newType);
+    }
+
+    public void onColumnSortRequested(int columnIndex, boolean ascending) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+
+        setLoading(true);
+        new SwingWorker<CSVTable, Void>() {
+            @Override
+            protected CSVTable doInBackground() {
+                return getFilter().sortByColumn(table, columnIndex, ascending);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    setTable(get());
+                } catch (InterruptedException | ExecutionException exception) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    setLoading(false);
+                }
+            }
+        }.execute();
+    }
+
+    public void onColumnSelected(int columnIndex) {
+        CSVTable table = getTable();
+        if (table == null) {
+            return;
+        }
+
+        setLoading(true);
+        new SwingWorker<Void, Void>() {
+            private Optional<String> min;
+            private Optional<String> max;
+            private Optional<String> avg;
+            private Optional<String> sum;
+
+            @Override
+            protected Void doInBackground() {
+                min = getStats().getColumnMin(table, columnIndex);
+                max = getStats().getColumnMax(table, columnIndex);
+                avg = getStats().getColumnAvg(table, columnIndex);
+                sum = getStats().getColumnSum(table, columnIndex);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    mainView.getBottomBar().setColumnStats(min, max, avg, sum);
+                } catch (InterruptedException | ExecutionException exception) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    setLoading(false);
+                }
+            }
+        }.execute();
+    }
+
+    public void onTableLoad() {
+        List<String> names = getLoader().getTablesName();
+        if (names.size() == 0) {
+            JOptionPane.showMessageDialog(mainView, "No tables loaded.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        if (names.size() == 1) {
+            CSVTable table = getLoader().getTable(names.get(0));
+            setTable(table);
+            return;
+        }
+
+        mainView.getTablePanel().refresh();
+    }
+
+    public void onTableSelected(String tableName) {
+        CSVTable table = getLoader().getTable(tableName);
+        setTable(table);
+    }
+
+    public void onTableClosed() {
+        mainView.getTablePanel().closeTable();
+        mainView.getTablePanel().refresh();
     }
 
     public void setStatus(String status) {
@@ -133,118 +330,12 @@ public final class GUIController extends CoreController {
         mainView.getBottomBar().setLoading(isLoading);
     }
 
-    public void openDocumentationDialog() {
-
-    }
-
-    public void openAboutDialog() {
-
-    }
-
-    public void onColumnSelected(int colIndex) {
-        CSVTable table = this.getTable();
-        if (table == null) {
-            return;
-        }
-        CSVType columnType = table.getColumnType(colIndex);
-
-        switch (columnType) {
-            case STRING: {
-                CSVColumn<String> column = table.getTypedColumn(colIndex, String::valueOf, String.class);
-                double minLength = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToInt(opt -> opt.get().length())
-                        .min()
-                        .orElse(0);
-                double maxLength = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToInt(opt -> opt.get().length())
-                        .max()
-                        .orElse(0);
-                this.mainView.getBottomBar().setColumnStats(
-                        Optional.of(Double.valueOf(minLength)),
-                        Optional.of(Double.valueOf(maxLength)),
-                        Optional.empty());
-            }
-                break;
-            case DATE: {
-                CSVColumn<LocalDate> column = table.getTypedColumn(colIndex, LocalDate::parse, LocalDate.class);
-                double minTime = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToLong(opt -> opt.get().toEpochDay())
-                        .min()
-                        .orElse(0);
-                double maxTime = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToLong(opt -> opt.get().toEpochDay())
-                        .max()
-                        .orElse(0);
-                this.mainView.getBottomBar().setColumnStats(
-                        Optional.of(minTime),
-                        Optional.of(maxTime),
-                        Optional.empty());
-            }
-                break;
-            case NUMERIC: {
-                CSVColumn<Double> column = table.getTypedColumn(colIndex, Double::valueOf, Double.class);
-                double sum = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToDouble(opt -> opt.get())
-                        .sum();
-                double min = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToDouble(opt -> opt.get())
-                        .min()
-                        .orElse(0);
-                double max = column.getCells().stream()
-                        .filter(Optional::isPresent)
-                        .mapToDouble(opt -> opt.get())
-                        .max()
-                        .orElse(0);
-                this.mainView.getBottomBar().setColumnStats(
-                        Optional.of(sum),
-                        Optional.of(min),
-                        Optional.of(max));
-            }
-                break;
-            default:
-                this.mainView.getBottomBar().clearColumnStats();
-                break;
-        }
-
-    }
-
-    public void onTableLoad() {
-        List<String> names = this.getLoader().getTablesName();
-        if (names.size() == 0) {
-            JOptionPane.showMessageDialog(mainView, "No tables loaded.", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        if (names.size() == 1) {
-            CSVTable table = this.getLoader().getTable(names.get(0));
-            this.setTable(table);
-            return;
-        }
-
-        mainView.getTablePanel().refresh();
-    }
-
-    public void onTableSelected(String tableName) {
-        CSVTable table = this.getLoader().getTable(tableName);
-        this.setTable(table);
-    }
-
-    public void onTableClosed() {
-        mainView.getTablePanel().closeTable();
-        mainView.getTablePanel().refresh();
-    }
-
     @Override
     public void setTable(CSVTable table) {
         super.setTable(table);
         mainView.getTablePanel().load(table);
 
-        String tableName = this.getLoader().getName(table);
+        String tableName = getLoader().getName(table);
         mainView.getBottomBar().setTableInfo(tableName, table.getRowCount(), table.getColumnCount());
         mainView.getBottomBar().clearColumnStats();
     }

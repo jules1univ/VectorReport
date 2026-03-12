@@ -1,208 +1,163 @@
 package fr.univrennes.istic.l2gen.io.csv.model;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class CSVTable {
-    public static final String DEFAULT_EMPTY_CELL = "(empty)";
+
+    private static final int TYPE_INFERENCE_SAMPLE_SIZE = 10;
 
     private Optional<CSVRow> header;
-    private final List<CSVRow> rows;
+
+    private CSVColumn[] columns;
+    private int columnCount;
+    int rowCount;
 
     public CSVTable() {
         this.header = Optional.empty();
-        this.rows = new ArrayList<>();
+        this.columns = new CSVColumn[0];
+        this.columnCount = 0;
+        this.rowCount = 0;
     }
 
     public CSVTable(CSVRow header, List<CSVRow> rows) {
         this.header = Optional.ofNullable(header);
-        this.rows = rows;
+        this.rowCount = rows.size();
+        this.columns = buildColumnsFromRows(rows);
+        this.columnCount = columns.length;
     }
 
     public CSVTable(CSVTable other) {
         this.header = other.header;
-        this.rows = new ArrayList<>(other.rows);
-    }
-
-    public Optional<CSVRow> getHeader() {
-        return header;
-    }
-
-    public List<CSVRow> getRows() {
-        return rows;
-    }
-
-    public CSVRow getRow(int index) {
-        return rows.get(index);
-    }
-
-    public void addRow(CSVRow row) {
-        rows.add(row);
-    }
-
-    public int getRowCount() {
-        return rows.size();
-    }
-
-    public CSVType getColumnType(int colIndex) {
-        return rows.isEmpty() ? CSVType.EMPTY : rows.get(0).getCellType(colIndex);
-    }
-
-    public CSVSubtype getColumnSubtype(int colIndex) {
-        return rows.isEmpty() ? CSVSubtype.EMPTY : rows.get(0).getCellSubtype(colIndex);
-    }
-
-    public CSVColumn<String> getColumn(int colIndex) {
-        CSVSubtype subtype = this.getColumnSubtype(colIndex);
-        String[] cells = new String[rows.size()];
-        for (int i = 0; i < rows.size(); i++) {
-            CSVRow row = rows.get(i);
-            cells[i] = row.getCell(colIndex).orElse(null);
+        this.rowCount = other.rowCount;
+        this.columnCount = other.columnCount;
+        this.columns = new CSVColumn[other.columnCount];
+        for (int i = 0; i < other.columnCount; i++) {
+            this.columns[i] = other.columns[i].sharedCopy();
         }
-        return new CSVColumn<>(subtype, cells);
     }
 
-    public <T> CSVColumn<T> getTypedColumn(int colIndex, Function<String, T> parser, Class<T> type) {
-        CSVSubtype subtype = this.getColumnSubtype(colIndex);
-        @SuppressWarnings("unchecked")
-        T[] cells = (T[]) Array.newInstance(type, rows.size());
-
-        for (int i = 0; i < rows.size(); i++) {
-            CSVRow row = rows.get(i);
-            String value = row.getCell(colIndex).orElse(null);
-            try {
-                cells[i] = value == null ? null : parser.apply(value);
-            } catch (Exception e) {
-                cells[i] = null;
+    private CSVColumn[] buildColumnsFromRows(List<CSVRow> rows) {
+        if (rows.isEmpty()) {
+            return new CSVColumn[0];
+        }
+        int colCount = rows.get(0).size();
+        CSVColumn[] cols = new CSVColumn[colCount];
+        for (int colIndex = 0; colIndex < colCount; colIndex++) {
+            String[] columnCells = new String[rows.size()];
+            for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+                columnCells[rowIndex] = rows.get(rowIndex).getRawCell(colIndex);
             }
+            CSVType inferredType = inferColumnType(columnCells, rows.size());
+            cols[colIndex] = new CSVColumn(inferredType, columnCells, rows.size());
         }
-        return new CSVColumn<>(subtype, cells);
+        return cols;
     }
 
-    public int getColumnCount() {
-        if (header.isPresent()) {
-            return header.get().getCells().size();
-        } else if (!rows.isEmpty()) {
-            return rows.get(0).getCells().size();
-        } else {
-            return 0;
+    private static CSVType inferColumnType(String[] cells, int rowCount) {
+        Map<CSVType, Integer> typeCounts = new HashMap<>();
+        int sampleSize = Math.min(TYPE_INFERENCE_SAMPLE_SIZE, rowCount);
+        for (int i = 0; i < sampleSize; i++) {
+            CSVType cellType = CSVType.inferType(cells[i]);
+            typeCounts.merge(cellType, 1, Integer::sum);
         }
+        return typeCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(CSVType.EMPTY);
     }
 
     public void setHeader(CSVRow header) {
         this.header = Optional.ofNullable(header);
     }
 
-    public String rangeToString(int offset, int limit) {
-        StringBuilder sb = new StringBuilder();
-        int columnCount = header.map(h -> h.getCells().size())
-                .orElse(rows.isEmpty() ? 0 : rows.get(0).getCells().size());
-
-        int[] columnWidths = new int[columnCount];
-
-        header.ifPresent(h -> {
-            for (int i = 0; i < h.getCells().size(); i++) {
-                columnWidths[i] = Math.max(columnWidths[i], h.getCells().get(i).orElse("").length());
-            }
-        });
-
-        for (int i = offset; i < Math.min(rows.size(), offset + limit); i++) {
-            CSVRow row = rows.get(i);
-            for (int j = 0; j < Math.min(row.getCells().size(), columnCount); j++) {
-                columnWidths[j] = Math.max(columnWidths[j], row.getCells().get(j).orElse("").length());
-            }
-        }
-
-        StringBuilder separator = new StringBuilder("+");
-        for (int width : columnWidths) {
-            separator.append("-".repeat(width + 2)).append("+");
-        }
-        separator.append("\n");
-
-        if (header.isPresent()) {
-            sb.append(separator);
-            sb.append("|");
-            CSVRow h = header.get();
-            for (int i = 0; i < columnCount; i++) {
-                String value = i < h.getCells().size() ? h.getCells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL)
-                        : CSVTable.DEFAULT_EMPTY_CELL;
-                sb.append(" ").append(centerString(value, columnWidths[i])).append(" |");
-            }
-            sb.append("\n");
-            sb.append(separator);
-        }
-
-        for (int i = offset; i < Math.min(rows.size(), offset + limit); i++) {
-            CSVRow row = rows.get(i);
-            if (header.isEmpty()) {
-                sb.append(separator);
-            }
-            sb.append("|");
-            for (int j = 0; j < columnCount; j++) {
-                String value = j < row.getCells().size() ? row.getCells().get(j).orElse("") : "";
-                sb.append(" ").append(centerString(value, columnWidths[j])).append(" |");
-            }
-            sb.append("\n");
-        }
-        sb.append(separator);
-
-        return sb.toString();
+    public Optional<CSVRow> getHeader() {
+        return header;
     }
 
-    public String columnToString(int colIndex, int offset, int limit) {
-        StringBuilder sb = new StringBuilder();
-        header.ifPresent(h -> {
-            if (colIndex < h.getCells().size()) {
-                sb.append(h.getCells().get(colIndex).orElse(CSVTable.DEFAULT_EMPTY_CELL)).append("\n");
-            }
-        });
-        for (int i = offset; i < Math.min(rows.size(), offset + limit); i++) {
-            CSVRow row = rows.get(i);
-            if (colIndex < row.getCells().size()) {
-                sb.append(row.getCells().get(colIndex).orElse(CSVTable.DEFAULT_EMPTY_CELL)).append("\n");
-            }
-        }
-        return sb.toString();
+    public Optional<String> getColumnName(int colIndex) {
+        return header.flatMap(h -> h.getCell(colIndex));
     }
 
-    public String rowToString(int rowIndex, int offset, int limit) {
-        if (rowIndex < 0 || rowIndex >= rows.size()) {
-            return "Row index out of bounds";
-        }
-        if (header.isPresent()) {
-            StringBuilder sb = new StringBuilder();
-            CSVRow h = header.get();
-            for (int i = offset; i < Math.min(h.getCells().size(), offset + limit); i++) {
-                String value = h.getCells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL);
-                sb.append(String.format("Column %d: %s\n", i, value));
-            }
-            sb.append("----\n");
-            return sb.toString() + rowToString(rowIndex, offset, limit);
-        }
-
-        CSVRow row = rows.get(rowIndex);
-        StringBuilder sb = new StringBuilder();
-        for (int i = offset; i < Math.min(row.getCells().size(), offset + limit); i++) {
-            String value = row.getCells().get(i).orElse(CSVTable.DEFAULT_EMPTY_CELL);
-            sb.append(String.format("Column %d: %s\n", i, value));
-        }
-        return sb.toString();
+    public int getRowCount() {
+        return rowCount;
     }
 
-    @Override
-    public String toString() {
-        return rangeToString(0, this.rows.size());
+    public int getColumnCount() {
+        return columnCount;
     }
 
-    private String centerString(String text, int width) {
-        if (text.length() >= width) {
-            return text;
+    public CSVRow getRow(int index) {
+        if (index < 0 || index >= rowCount) {
+            throw new IndexOutOfBoundsException("Row index: " + index + ", rowCount: " + rowCount);
         }
-        int leftPadding = (width - text.length()) / 2;
-        int rightPadding = width - text.length() - leftPadding;
-        return " ".repeat(leftPadding) + text + " ".repeat(rightPadding);
+        return CSVRow.virtualRow(columns, index);
+    }
+
+    public CSVColumn getColumn(int colIndex) {
+        return columns[colIndex];
+    }
+
+    public void addRow(CSVRow row) {
+        if (columnCount == 0) {
+            throw new IllegalStateException("Cannot add rows to a table with no columns");
+        }
+        if (row.size() != columnCount) {
+            throw new IllegalArgumentException(
+                    "Row size " + row.size() + " does not match column count " + columnCount);
+        }
+        int newRowIndex = rowCount;
+        for (int colIndex = 0; colIndex < columnCount; colIndex++) {
+            CSVColumn column = columns[colIndex];
+            column.growTo(newRowIndex + 1);
+            column.setCell(newRowIndex, row.getRawCell(colIndex));
+        }
+        rowCount++;
+    }
+
+    public void addColumn(CSVColumn column) {
+        if (rowCount > 0 && column.size() != rowCount) {
+            throw new IllegalArgumentException(
+                    "Column size " + column.size() + " does not match row count " + rowCount);
+        }
+        if (columnCount == columns.length) {
+            columns = Arrays.copyOf(columns, Math.max(8, columnCount * 2));
+        }
+        columns[columnCount] = column;
+        columnCount++;
+        if (rowCount == 0) {
+            rowCount = column.size();
+        }
+    }
+
+    public void removeColumn(int colIndex) {
+        if (colIndex < 0 || colIndex >= columnCount) {
+            throw new IndexOutOfBoundsException("Column index: " + colIndex);
+        }
+        System.arraycopy(columns, colIndex + 1, columns, colIndex, columnCount - colIndex - 1);
+        columns[columnCount - 1] = null;
+        columnCount--;
+    }
+
+    public void removeRow(int rowIndex) {
+        if (rowIndex < 0 || rowIndex >= rowCount) {
+            throw new IndexOutOfBoundsException("Row index: " + rowIndex + ", rowCount: " + rowCount);
+        }
+        for (int colIndex = 0; colIndex < columnCount; colIndex++) {
+            columns[colIndex].removeRowAt(rowIndex, rowCount);
+        }
+        rowCount--;
+    }
+
+    public List<CSVRow> getRows() {
+        return new VirtualRowList(this);
+    }
+
+    public List<CSVColumn> getColumns() {
+        return Collections.unmodifiableList(Arrays.asList(Arrays.copyOf(columns, columnCount)));
     }
 }

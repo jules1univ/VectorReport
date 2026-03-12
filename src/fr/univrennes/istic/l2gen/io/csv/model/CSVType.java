@@ -4,36 +4,117 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 public enum CSVType {
-    STRING,
-    DATE,
-    NUMERIC,
+    EMPTY,
     BOOLEAN,
-    EMPTY;
-
-    public static CSVType from(CSVSubtype subtype) {
-        return switch (subtype) {
-            case STRING -> STRING;
-            case URL -> STRING;
-            case EMAIL -> STRING;
-
-            case INTEGER -> NUMERIC;
-            case FLOATING -> NUMERIC;
-            case PERCENTAGE -> NUMERIC;
-
-            case BOOLEAN -> BOOLEAN;
-
-            case DATE -> DATE;
-
-            case EMPTY -> EMPTY;
-            default -> throw new IllegalArgumentException("Unsupported CSV subtype: " + subtype);
-        };
-    }
+    INTEGER,
+    DOUBLE,
+    PERCENTAGE,
+    URL,
+    DATE,
+    STRING;
 
     private static final Pattern INTEGER_PATTERN = Pattern.compile("^[+-]?\\d+$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
+    public static Optional<Class<?>> inferClass(String value) {
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+
+        if (isBoolean(value)) {
+            return Optional.of(Boolean.class);
+        }
+        if (isInteger(value)) {
+            return Optional.of(Integer.class);
+        }
+        if (isFloating(value)) {
+            return Optional.of(Double.class);
+        }
+        if (isPercentage(value)) {
+            return Optional.of(Double.class);
+        }
+        if (isUrl(value)) {
+            return Optional.of(URI.class);
+        }
+        if (isDate(value)) {
+            return Optional.of(LocalDate.class);
+        }
+        return Optional.of(String.class);
+    }
+
+    public static CSVType inferType(String value) {
+        return value == null ? CSVType.EMPTY : fromClass(inferClass(value).orElse(String.class));
+    }
+
+    public static Optional<Class<?>> fromType(CSVType type) {
+        switch (type) {
+            case BOOLEAN:
+                return Optional.of(Boolean.class);
+            case INTEGER:
+                return Optional.of(Integer.class);
+            case DOUBLE:
+                return Optional.of(Double.class);
+            case PERCENTAGE:
+                return Optional.of(Double.class);
+            case URL:
+                return Optional.of(URI.class);
+            case DATE:
+                return Optional.of(LocalDate.class);
+            default:
+                return Optional.empty();
+        }
+    }
+
+    public static CSVType fromClass(Class<?> cls) {
+        if (cls == Boolean.class) {
+            return CSVType.BOOLEAN;
+        }
+        if (cls == Integer.class) {
+            return CSVType.INTEGER;
+        }
+        if (cls == Double.class) {
+            return CSVType.DOUBLE;
+        }
+        if (cls == URI.class) {
+            return CSVType.URL;
+        }
+        if (cls == LocalDate.class) {
+            return CSVType.DATE;
+        }
+        if (cls == String.class) {
+            return CSVType.STRING;
+        }
+        return CSVType.EMPTY;
+    }
+
+    public static <T> Optional<T> parseValue(String value, Class<T> cls) {
+        try {
+            if (cls == Boolean.class) {
+                String normalized = value.toLowerCase();
+                if (normalized.equals("true") || normalized.equals("yes") || normalized.equals("1")) {
+                    return Optional.of(cls.cast(Boolean.TRUE));
+                } else if (normalized.equals("false") || normalized.equals("no") || normalized.equals("0")) {
+                    return Optional.of(cls.cast(Boolean.FALSE));
+                }
+            } else if (cls == Integer.class) {
+                return Optional.of(cls.cast(Integer.parseInt(value)));
+            } else if (cls == Double.class) {
+                return Optional.of(cls.cast(Double.parseDouble(value)));
+            } else if (cls == URI.class) {
+                return Optional.of(cls.cast(new URI(value)));
+            } else if (cls == LocalDate.class) {
+                return Optional.of(cls.cast(LocalDate.parse(value)));
+            } else if (cls == String.class) {
+                return Optional.of(cls.cast(value));
+            }
+        } catch (Exception e) {
+        }
+
+        return Optional.empty();
+    }
 
     public static boolean isNumeric(String value) {
         try {
@@ -56,14 +137,14 @@ public enum CSVType {
         return INTEGER_PATTERN.matcher(value).matches();
     }
 
-    public static boolean isFloating(String value) {
+    private static boolean isFloating(String value) {
         if (!isNumeric(value) || isInteger(value)) {
             return false;
         }
         return value.contains(".") || value.contains("e") || value.contains("E");
     }
 
-    public static boolean isUrl(String value) {
+    private static boolean isUrl(String value) {
         try {
             URI uri = new URI(value);
             String scheme = uri.getScheme();
@@ -71,10 +152,6 @@ public enum CSVType {
         } catch (URISyntaxException e) {
             return false;
         }
-    }
-
-    public static boolean isEmail(String value) {
-        return EMAIL_PATTERN.matcher(value).matches();
     }
 
     public static boolean isBoolean(String value) {

@@ -14,6 +14,7 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -28,6 +29,7 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
 
@@ -113,13 +115,19 @@ public class ChartSettingPanel extends JPanel {
             gbc.gridy++;
         }
 
-        JButton header = new JButton("▾  " + title);
+        Icon expandedIcon = UIManager.getIcon("Tree.expandedIcon");
+        Icon collapsedIcon = UIManager.getIcon("Tree.collapsedIcon");
+
+        JButton header = new JButton(title, expandedIcon);
         header.setHorizontalAlignment(SwingConstants.LEFT);
-        header.setFocusPainted(false);
+        header.setFocusPainted(true);
+        header.setBorderPainted(true);
+        header.setContentAreaFilled(true);
+
         header.addActionListener(e -> {
             boolean visible = !body.isVisible();
             body.setVisible(visible);
-            header.setText((visible ? "▾  " : "▸  ") + title);
+            header.setIcon(visible ? expandedIcon : collapsedIcon);
         });
 
         section.add(header, BorderLayout.NORTH);
@@ -168,7 +176,7 @@ public class ChartSettingPanel extends JPanel {
         JPanel swatch = new JPanel();
         swatch.setBackground(initial);
         swatch.setPreferredSize(new Dimension(24, 0));
-        JButton btn = new JButton("Pick…");
+        JButton btn = new JButton("Pick...");
         btn.addActionListener(e -> {
             Color chosen = JColorChooser.showDialog(this, "Choose color", swatch.getBackground());
             if (chosen != null)

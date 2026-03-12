@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.application.cli.util.log;
+package fr.univrennes.istic.l2gen.application.core.util.log;
 
 import java.io.IOException;
 import java.util.Optional;

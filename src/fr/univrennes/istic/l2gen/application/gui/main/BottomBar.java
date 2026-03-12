@@ -10,9 +10,12 @@ public final class BottomBar extends JPanel {
     private final JLabel nameLabel;
     private final JLabel rowsLabel;
     private final JLabel colsLabel;
+
     private final JLabel sumLabel;
+    private final JLabel avgLabel;
     private final JLabel minLabel;
     private final JLabel maxLabel;
+
     private final JProgressBar loadingBar;
 
     public BottomBar() {
@@ -28,12 +31,21 @@ public final class BottomBar extends JPanel {
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 3));
         centerPanel.setOpaque(false);
 
-        nameLabel = createInfoLabel("—");
-        rowsLabel = createInfoLabel("Rows: —");
-        colsLabel = createInfoLabel("Cols: —");
-        sumLabel = createInfoLabel("Sum: —");
-        minLabel = createInfoLabel("Min: —");
-        maxLabel = createInfoLabel("Max: —");
+        nameLabel = createInfoLabel("");
+        rowsLabel = createInfoLabel("");
+        colsLabel = createInfoLabel("");
+        sumLabel = createInfoLabel("");
+        avgLabel = createInfoLabel("");
+        minLabel = createInfoLabel("");
+        maxLabel = createInfoLabel("");
+
+        nameLabel.setVisible(false);
+        rowsLabel.setVisible(false);
+        colsLabel.setVisible(false);
+        sumLabel.setVisible(false);
+        avgLabel.setVisible(false);
+        minLabel.setVisible(false);
+        maxLabel.setVisible(false);
 
         centerPanel.add(nameLabel);
         centerPanel.add(makeSeparator());
@@ -70,22 +82,39 @@ public final class BottomBar extends JPanel {
             nameLabel.setText(name);
             rowsLabel.setText("Rows: " + rows);
             colsLabel.setText("Cols: " + cols);
+            nameLabel.setVisible(true);
+            rowsLabel.setVisible(true);
+            colsLabel.setVisible(true);
         });
     }
 
-    public void setColumnStats(Optional<Double> sum, Optional<Double> min, Optional<Double> max) {
+    public void setColumnStats(Optional<String> min, Optional<String> max, Optional<String> avg, Optional<String> sum) {
         SwingUtilities.invokeLater(() -> {
-            sumLabel.setText("Sum: " + sum.map(this::formatNumber).orElse("—"));
-            minLabel.setText("Min: " + min.map(this::formatNumber).orElse("—"));
-            maxLabel.setText("Max: " + max.map(this::formatNumber).orElse("—"));
+            sum.ifPresentOrElse(value -> {
+                sumLabel.setText("Sum: " + value);
+                sumLabel.setVisible(true);
+            }, () -> sumLabel.setVisible(false));
+            avg.ifPresentOrElse(value -> {
+                avgLabel.setText("Avg: " + value);
+                avgLabel.setVisible(true);
+            }, () -> avgLabel.setVisible(false));
+            min.ifPresentOrElse(value -> {
+                minLabel.setText("Min: " + value);
+                minLabel.setVisible(true);
+            }, () -> minLabel.setVisible(false));
+            max.ifPresentOrElse(value -> {
+                maxLabel.setText("Max: " + value);
+                maxLabel.setVisible(true);
+            }, () -> maxLabel.setVisible(false));
         });
     }
 
     public void clearColumnStats() {
         SwingUtilities.invokeLater(() -> {
-            sumLabel.setText("Sum: —");
-            minLabel.setText("Min: —");
-            maxLabel.setText("Max: —");
+            sumLabel.setVisible(false);
+            avgLabel.setVisible(false);
+            minLabel.setVisible(false);
+            maxLabel.setVisible(false);
         });
     }
 
@@ -96,13 +125,6 @@ public final class BottomBar extends JPanel {
             revalidate();
             repaint();
         });
-    }
-
-    private String formatNumber(double value) {
-        if (value == Math.floor(value) && !Double.isInfinite(value)) {
-            return String.valueOf((long) value);
-        }
-        return String.format("%.2f", value);
     }
 
     private JLabel createInfoLabel(String text) {

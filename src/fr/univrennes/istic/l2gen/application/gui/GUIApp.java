@@ -3,8 +3,11 @@ package fr.univrennes.istic.l2gen.application.gui;
 import fr.univrennes.istic.l2gen.application.core.CoreApp;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
+import java.time.LocalTime;
+
 import javax.swing.*;
 
+import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public final class GUIApp extends CoreApp<GUIController> {
@@ -19,7 +22,8 @@ public final class GUIApp extends CoreApp<GUIController> {
 
     @Override
     public void start() {
-        if (!this.controller.init()) {
+
+        if (!FlatLightLaf.setup()) {
             JOptionPane.showMessageDialog(null,
                     "Application failed to initialize.",
                     "Startup Error",
@@ -27,7 +31,15 @@ public final class GUIApp extends CoreApp<GUIController> {
             return;
         }
 
-        FlatLightLaf.setup();
+        int hour = LocalTime.now().getHour();
+        if (hour >= 18 || hour < 6) {
+            try {
+                UIManager.setLookAndFeel(new FlatDarkLaf());
+            } catch (Exception e) {
+                return;
+            }
+        }
+
         SwingUtilities.invokeLater(() -> {
             MainView view = new MainView(controller);
             view.setVisible(true);

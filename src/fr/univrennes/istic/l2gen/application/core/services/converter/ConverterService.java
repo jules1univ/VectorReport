@@ -24,7 +24,7 @@ public final class ConverterService implements IService {
         DataSet data = new DataSet(label);
 
         for (CSVRow row : table.getRows()) {
-            if (valColIndex < row.getCells().size() && !row.getCell(valColIndex).isEmpty()) {
+            if (valColIndex < row.size() && !row.getCell(valColIndex).isEmpty()) {
                 try {
                     double value = Double.parseDouble(row.getCell(valColIndex).get());
                     data.values().add(new Value(value, defaultColor));
@@ -42,7 +42,7 @@ public final class ConverterService implements IService {
         DataSet data = new DataSet(label);
 
         for (CSVRow row : table.getRows()) {
-            if (valueColIndex < row.getCells().size() && labelColIndex < row.getCells().size()
+            if (valueColIndex < row.size() && labelColIndex < row.size()
                     && !row.getCell(valueColIndex).isEmpty() && !row.getCell(labelColIndex).isEmpty()) {
                 try {
                     double value = Double.parseDouble(row.getCell(valueColIndex).get());
@@ -65,7 +65,7 @@ public final class ConverterService implements IService {
         Map<String, List<Double>> categoryValues = new HashMap<>();
 
         for (CSVRow row : table.getRows()) {
-            if (categoryColIndex < row.getCells().size() && valueColIndex < row.getCells().size()
+            if (categoryColIndex < row.size() && valueColIndex < row.size()
                     && !row.getCell(categoryColIndex).isEmpty() && !row.getCell(valueColIndex).isEmpty()) {
                 try {
                     String category = row.getCell(categoryColIndex).get();

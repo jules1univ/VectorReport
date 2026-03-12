@@ -19,8 +19,8 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import fr.univrennes.istic.l2gen.application.cli.util.log.Log;
 import fr.univrennes.istic.l2gen.application.core.services.IService;
+import fr.univrennes.istic.l2gen.application.core.util.log.Log;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 import fr.univrennes.istic.l2gen.io.csv.parser.CSVParseException;
 import fr.univrennes.istic.l2gen.io.csv.parser.CSVParser;
@@ -113,7 +113,7 @@ public final class LoaderService implements IService {
             List<String> paths = new ArrayList<>();
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".csv")) {
+                if (!entry.isDirectory()) {
                     InputStream entryStream = new FilterInputStream(zis) {
                         @Override
                         public void close() {

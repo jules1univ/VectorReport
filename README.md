@@ -37,11 +37,23 @@ cd VectorReport
 
 ### Librairies
 
-- JUnit 4
+- JUnit 4.13.2
+
+  > Utilisé pour les tests unitaires.
+
+- FlatLaf 3.7.1
+
+  > Look and Feel moderne pour l'interface graphique.
+
+- SVG Salamander 1.1.5.3
+  > Librairie de rendu SVG utilisée pour afficher les graphiques générés.
 
 ## Contribution
 
 **Membres**: [Liste des mebres](docs/MEMBERS.md)
+
 **Contribution**: [Guide de contribution](CONTRIBUTING.md)
+
 **Documentation**: [Documentation complète](docs/DOCUMENTATION.md)
+
 **TODOs**: [Liste des tâches en cours](docs/TODOS.md)

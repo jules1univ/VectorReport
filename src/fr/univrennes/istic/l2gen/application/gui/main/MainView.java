@@ -20,7 +20,7 @@ import javax.swing.UIManager;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
 import fr.univrennes.istic.l2gen.application.gui.panels.ChartPanel;
 import fr.univrennes.istic.l2gen.application.gui.panels.ChartSettingPanel;
-import fr.univrennes.istic.l2gen.application.gui.panels.TablePanel;
+import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 
 public final class MainView extends JFrame {
 

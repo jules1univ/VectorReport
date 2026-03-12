@@ -174,7 +174,7 @@ public final class CSVParser {
             }
         }
 
-        this.delimiter = counts[bestIndex] > 0 ? options[bestIndex] : delimiter;
+        this.delimiter = counts[bestIndex] > 0 ? options[bestIndex] : ',';
     }
 
     private String extractField(char[] buf, int len) {

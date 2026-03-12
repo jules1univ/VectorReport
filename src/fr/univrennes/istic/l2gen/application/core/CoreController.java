@@ -5,6 +5,7 @@ import fr.univrennes.istic.l2gen.application.core.services.converter.ConverterSe
 import fr.univrennes.istic.l2gen.application.core.services.filter.FilterService;
 import fr.univrennes.istic.l2gen.application.core.services.loader.LoaderService;
 import fr.univrennes.istic.l2gen.application.core.services.report.ReportService;
+import fr.univrennes.istic.l2gen.application.core.services.stats.StatsService;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public abstract class CoreController {
@@ -14,6 +15,7 @@ public abstract class CoreController {
     private final ChartService chart;
     private final ConverterService converter;
     private final FilterService filter;
+    private final StatsService stats;
     private final LoaderService loader;
     private final ReportService report;
 
@@ -23,6 +25,7 @@ public abstract class CoreController {
         this.filter = new FilterService();
         this.loader = new LoaderService();
         this.report = new ReportService();
+        this.stats = new StatsService();
     }
 
     public LoaderService getLoader() {
@@ -37,6 +40,10 @@ public abstract class CoreController {
         return this.filter;
     }
 
+    public StatsService getStats() {
+        return this.stats;
+    }
+
     public ChartService getChart() {
         return this.chart;
     }
@@ -44,8 +51,6 @@ public abstract class CoreController {
     public ReportService getReport() {
         return this.report;
     }
-
-    public abstract boolean init();
 
     public final CSVTable getTable() {
         return this.table;

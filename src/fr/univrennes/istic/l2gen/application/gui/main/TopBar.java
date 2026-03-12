@@ -27,16 +27,8 @@ public final class TopBar extends JMenuBar {
         exitItem.addActionListener(e -> System.exit(0));
         file.add(exitItem);
 
-        // --- View Menu ---
         JMenu view = new JMenu("View");
 
-        JMenuItem refreshItem = new JMenuItem("Refresh");
-        refreshItem.addActionListener(e -> controller.refreshView());
-        view.add(refreshItem);
-
-        view.addSeparator();
-
-        // --- Panels submenu ---
         JMenu panels = new JMenu("Panels");
 
         JMenuItem toggleTable = new JMenuItem("Toggle Table");
