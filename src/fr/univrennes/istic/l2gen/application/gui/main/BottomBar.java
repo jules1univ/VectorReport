@@ -28,9 +28,6 @@ public final class BottomBar extends JPanel {
         statusLabel.setFont(statusLabel.getFont().deriveFont(Font.PLAIN, 11f));
         add(statusLabel, BorderLayout.WEST);
 
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 3));
-        centerPanel.setOpaque(false);
-
         nameLabel = createInfoLabel("");
         rowsLabel = createInfoLabel("");
         colsLabel = createInfoLabel("");
@@ -47,17 +44,26 @@ public final class BottomBar extends JPanel {
         minLabel.setVisible(false);
         maxLabel.setVisible(false);
 
-        centerPanel.add(nameLabel);
-        centerPanel.add(makeSeparator());
-        centerPanel.add(rowsLabel);
-        centerPanel.add(makeSeparator());
-        centerPanel.add(colsLabel);
-        centerPanel.add(makeSeparator());
-        centerPanel.add(sumLabel);
-        centerPanel.add(makeSeparator());
-        centerPanel.add(minLabel);
-        centerPanel.add(makeSeparator());
-        centerPanel.add(maxLabel);
+        JPanel labelsRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        labelsRow.setOpaque(false);
+
+        labelsRow.add(nameLabel);
+        labelsRow.add(makeSeparator());
+        labelsRow.add(rowsLabel);
+        labelsRow.add(makeSeparator());
+        labelsRow.add(colsLabel);
+        labelsRow.add(makeSeparator());
+        labelsRow.add(sumLabel);
+        labelsRow.add(makeSeparator());
+        labelsRow.add(avgLabel);
+        labelsRow.add(makeSeparator());
+        labelsRow.add(minLabel);
+        labelsRow.add(makeSeparator());
+        labelsRow.add(maxLabel);
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setOpaque(false);
+        centerPanel.add(labelsRow, new GridBagConstraints());
 
         add(centerPanel, BorderLayout.CENTER);
 
@@ -82,6 +88,7 @@ public final class BottomBar extends JPanel {
             nameLabel.setText(name);
             rowsLabel.setText("Rows: " + rows);
             colsLabel.setText("Cols: " + cols);
+
             nameLabel.setVisible(true);
             rowsLabel.setVisible(true);
             colsLabel.setVisible(true);

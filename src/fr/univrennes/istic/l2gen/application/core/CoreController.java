@@ -1,5 +1,7 @@
 package fr.univrennes.istic.l2gen.application.core;
 
+import java.util.Optional;
+
 import fr.univrennes.istic.l2gen.application.core.services.chart.ChartService;
 import fr.univrennes.istic.l2gen.application.core.services.converter.ConverterService;
 import fr.univrennes.istic.l2gen.application.core.services.filter.FilterService;
@@ -52,8 +54,8 @@ public abstract class CoreController {
         return this.report;
     }
 
-    public final CSVTable getTable() {
-        return this.table;
+    public final Optional<CSVTable> getTable() {
+        return Optional.ofNullable(table);
     }
 
     public void setTable(CSVTable table) {

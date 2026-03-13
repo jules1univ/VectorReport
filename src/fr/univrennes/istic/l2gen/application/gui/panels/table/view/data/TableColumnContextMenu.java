@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.application.gui.panels.table;
+package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -7,23 +7,20 @@ import javax.swing.JPopupMenu;
 
 import fr.univrennes.istic.l2gen.application.core.services.stats.CorrelationType;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
+import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVType;
 
-import java.awt.Component;
-
-final class TableContextMenu extends JPopupMenu {
+public final class TableColumnContextMenu extends JPopupMenu {
 
     private final GUIController controller;
     private final TablePanel tablePanel;
     private final int columnIndex;
-    private final Component parentComponent;
 
-    public TableContextMenu(GUIController controller, TablePanel tablePanel, int columnIndex,
-            Component parentComponent) {
+    public TableColumnContextMenu(TablePanel tablePanel, GUIController controller,
+            int columnIndex) {
         this.controller = controller;
         this.tablePanel = tablePanel;
         this.columnIndex = columnIndex;
-        this.parentComponent = parentComponent;
 
         add(buildSortMenu());
         addSeparator();
@@ -35,7 +32,7 @@ final class TableContextMenu extends JPopupMenu {
 
         JMenuItem renameColumnItem = new JMenuItem("Rename column");
         renameColumnItem.addActionListener(e -> {
-            String newName = JOptionPane.showInputDialog(parentComponent, "New column name:",
+            String newName = JOptionPane.showInputDialog(tablePanel, "New column name:",
                     tablePanel.getTable().getColumnName(columnIndex));
             if (newName != null && !newName.isBlank()) {
                 tablePanel.renameColumn(columnIndex, newName);
@@ -77,47 +74,39 @@ final class TableContextMenu extends JPopupMenu {
         filterByCategoryMenu.add(filterCatCountItem);
         filterByCategoryMenu.add(filterCatPercentageItem);
 
-        JMenuItem filterByValueItem = new JMenuItem("By value (equals/contains)");
-        filterByValueItem.addActionListener(e -> {
-            String value = JOptionPane.showInputDialog(parentComponent, "Filter rows where column equals or contains:");
-            if (value != null && !value.isBlank()) {
-                controller.onFilterByValueRequested(columnIndex, value.trim());
-            }
-        });
-
         JMenuItem filterTopNItem = new JMenuItem("Top N values");
         filterTopNItem.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(parentComponent, "Show top N values:");
+            String input = JOptionPane.showInputDialog(tablePanel, "Show top N values:");
             if (input != null && !input.isBlank()) {
                 try {
                     int n = Integer.parseInt(input.trim());
                     controller.onFilterTopNRequested(columnIndex, n, true);
                 } catch (NumberFormatException ignored) {
-                    JOptionPane.showMessageDialog(parentComponent, "Please enter a valid integer.");
+                    JOptionPane.showMessageDialog(tablePanel, "Please enter a valid integer.");
                 }
             }
         });
 
         JMenuItem filterBottomNItem = new JMenuItem("Bottom N values");
         filterBottomNItem.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(parentComponent, "Show bottom N values:");
+            String input = JOptionPane.showInputDialog(tablePanel, "Show bottom N values:");
             if (input != null && !input.isBlank()) {
                 try {
                     int n = Integer.parseInt(input.trim());
                     controller.onFilterTopNRequested(columnIndex, n, false);
                 } catch (NumberFormatException ignored) {
-                    JOptionPane.showMessageDialog(parentComponent, "Please enter a valid integer.");
+                    JOptionPane.showMessageDialog(tablePanel, "Please enter a valid integer.");
                 }
             }
         });
 
         JMenuItem filterNumericRangeItem = new JMenuItem("By numeric range");
         filterNumericRangeItem.addActionListener(e -> {
-            String minInput = JOptionPane.showInputDialog(parentComponent, "Minimum value:");
+            String minInput = JOptionPane.showInputDialog(tablePanel, "Minimum value:");
             if (minInput == null) {
                 return;
             }
-            String maxInput = JOptionPane.showInputDialog(parentComponent, "Maximum value:");
+            String maxInput = JOptionPane.showInputDialog(tablePanel, "Maximum value:");
             if (maxInput == null) {
                 return;
             }
@@ -126,23 +115,26 @@ final class TableContextMenu extends JPopupMenu {
                 double max = Double.parseDouble(maxInput.trim());
                 controller.onFilterByRangeRequested(columnIndex, min, max);
             } catch (NumberFormatException ignored) {
-                JOptionPane.showMessageDialog(parentComponent, "Please enter valid numbers.");
+                JOptionPane.showMessageDialog(tablePanel, "Please enter valid numbers.");
             }
         });
 
-        JMenuItem filterEmptyItem = new JMenuItem("Show empty/null only");
-        filterEmptyItem.addActionListener(e -> controller.onFilterEmptyRequested(columnIndex));
+        JMenuItem filterEmptyItem = new JMenuItem("Show empty values only");
+        filterEmptyItem.addActionListener(e -> controller.onFilterEmptyRequested(columnIndex, true));
+
+        JMenuItem filterNonEmptyItem = new JMenuItem("Show non-empty values only");
+        filterNonEmptyItem.addActionListener(e -> controller.onFilterEmptyRequested(columnIndex, false));
 
         JMenuItem clearFilterItem = new JMenuItem("Clear filter");
         clearFilterItem.addActionListener(e -> controller.onFilterCleared(columnIndex));
 
         filterMenu.add(filterByCategoryMenu);
         filterMenu.addSeparator();
-        filterMenu.add(filterByValueItem);
         filterMenu.add(filterTopNItem);
         filterMenu.add(filterBottomNItem);
         filterMenu.add(filterNumericRangeItem);
         filterMenu.add(filterEmptyItem);
+        filterMenu.add(filterNonEmptyItem);
         filterMenu.addSeparator();
         filterMenu.add(clearFilterItem);
         return filterMenu;

@@ -1,18 +1,18 @@
-package fr.univrennes.istic.l2gen.application.gui.panels.table;
+package fr.univrennes.istic.l2gen.application.gui.panels.table.filter;
 
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-final class FilterConditionRow {
+public final class FilterConditionRow {
 
-    final JPanel rowPanel;
-    final JComboBox<String> operatorComboBox;
-    final JComboBox<String> columnComboBox;
-    final JComboBox<String> conditionComboBox;
-    final JTextField valueTextField;
+    public final JPanel rowPanel;
+    public final JComboBox<String> operatorComboBox;
+    public final JComboBox<String> columnComboBox;
+    public final JComboBox<String> conditionComboBox;
+    public final JTextField valueTextField;
 
-    FilterConditionRow(
+    public FilterConditionRow(
             JPanel rowPanel,
             JComboBox<String> operatorComboBox,
             JComboBox<String> columnComboBox,

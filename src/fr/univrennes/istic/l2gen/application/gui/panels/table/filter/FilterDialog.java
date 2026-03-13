@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.application.gui.panels.table;
+package fr.univrennes.istic.l2gen.application.gui.panels.table.filter;
 
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -24,20 +24,20 @@ import java.util.List;
 
 public final class FilterDialog extends JDialog {
 
-    static final String OPERATOR_AND = "AND";
-    static final String OPERATOR_OR = "OR";
-    static final String OPERATOR_NOT = "NOT";
+    public static final String OPERATOR_AND = "AND";
+    public static final String OPERATOR_OR = "OR";
+    public static final String OPERATOR_NOT = "NOT";
 
-    static final String CONDITION_EQUALS = "equals";
-    static final String CONDITION_CONTAINS = "contains";
-    static final String CONDITION_STARTS_WITH = "starts with";
-    static final String CONDITION_ENDS_WITH = "ends with";
-    static final String CONDITION_GREATER_THAN = ">";
-    static final String CONDITION_LESS_THAN = "<";
-    static final String CONDITION_GREATER_OR_EQUAL = ">=";
-    static final String CONDITION_LESS_OR_EQUAL = "<=";
-    static final String CONDITION_IS_EMPTY = "empty";
-    static final String CONDITION_IS_NOT_EMPTY = "not empty";
+    public static final String CONDITION_EQUALS = "equals";
+    public static final String CONDITION_CONTAINS = "contains";
+    public static final String CONDITION_STARTS_WITH = "starts with";
+    public static final String CONDITION_ENDS_WITH = "ends with";
+    public static final String CONDITION_GREATER_THAN = ">";
+    public static final String CONDITION_LESS_THAN = "<";
+    public static final String CONDITION_GREATER_OR_EQUAL = ">=";
+    public static final String CONDITION_LESS_OR_EQUAL = "<=";
+    public static final String CONDITION_IS_EMPTY = "empty";
+    public static final String CONDITION_IS_NOT_EMPTY = "not empty";
 
     private final String[] columnNames;
     private final GUIController controller;
@@ -88,7 +88,6 @@ public final class FilterDialog extends JDialog {
         JButton addNotButton = new JButton("NOT");
         addNotButton.addActionListener(e -> appendConditionRow(OPERATOR_NOT));
 
-        addRowPanel.add(new JLabel("Add condition:"));
         addRowPanel.add(addAndButton);
         addRowPanel.add(addOrButton);
         addRowPanel.add(addNotButton);

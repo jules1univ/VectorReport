@@ -1,4 +1,4 @@
-package fr.univrennes.istic.l2gen.application.gui.panels.table;
+package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
 import javax.swing.Box;
 import javax.swing.Icon;
@@ -7,8 +7,9 @@ import javax.swing.JToolBar;
 import javax.swing.UIManager;
 
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
+import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 
-final class TableToolBar extends JToolBar {
+public final class TableToolBar extends JToolBar {
 
     TableToolBar(GUIController controller, TablePanel tablePanel, Runnable onClose) {
         setFloatable(false);
@@ -18,6 +19,9 @@ final class TableToolBar extends JToolBar {
 
         JButton advancedFilterButton = new JButton("Filters");
         advancedFilterButton.addActionListener(e -> tablePanel.openAdvancedFilterDialog());
+
+        JButton showAllColumnsButton = new JButton("Show all columns");
+        showAllColumnsButton.addActionListener(e -> tablePanel.showAllColumns());
 
         Icon closeIcon = UIManager.getIcon("InternalFrame.closeIcon");
         JButton closeButton = new JButton(closeIcon);
@@ -29,6 +33,8 @@ final class TableToolBar extends JToolBar {
         add(saveButton);
         addSeparator();
         add(advancedFilterButton);
+        addSeparator();
+        add(showAllColumnsButton);
         add(Box.createHorizontalGlue());
         add(closeButton);
     }

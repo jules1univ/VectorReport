@@ -121,10 +121,10 @@ public final class GUIController extends CoreController {
     }
 
     public void onFilterByCategoryRequested(int columnIndex, boolean percentage) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
+        CSVTable table = getTable().get();
 
         setLoading(true);
 
@@ -148,18 +148,17 @@ public final class GUIController extends CoreController {
     }
 
     public void onMultiColumnCorrelationRequested(int columnIndex, List<Integer> targetColumnIndices) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
-
+        CSVTable table = getTable().get();
     }
 
     public void onCorrelationRequested(int columnIndex, int targetColIndex, CorrelationType type) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
+        CSVTable table = getTable().get();
         setLoading(true);
         new SwingWorker<Double, Void>() {
             @Override
@@ -190,13 +189,7 @@ public final class GUIController extends CoreController {
     }
 
     public void onValueDistributionRequested(int columnIndex) {
-        CSVTable table = getTable();
-        if (table == null) {
-            return;
-        }
-    }
 
-    public void onFilterByValueRequested(int columnIndex, String value) {
     }
 
     public void onFilterTopNRequested(int columnIndex, int n, boolean top) {
@@ -205,7 +198,7 @@ public final class GUIController extends CoreController {
     public void onFilterByRangeRequested(int columnIndex, double min, double max) {
     }
 
-    public void onFilterEmptyRequested(int columnIndex) {
+    public void onFilterEmptyRequested(int columnIndex, boolean showEmpty) {
     }
 
     public void onTableSaveRequested() {
@@ -218,28 +211,28 @@ public final class GUIController extends CoreController {
     }
 
     public void onColumnRemoveRequested(int columnIndex) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
+        CSVTable table = getTable().get();
         CSVTable copy = new CSVTable(table);
         copy.removeColumn(columnIndex);
         setTable(copy);
     }
 
     public void onColumnTypeChangeRequested(int columnIndex, CSVType newType) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
+        CSVTable table = getTable().get();
         table.getColumn(columnIndex).setType(newType);
     }
 
     public void onColumnSortRequested(int columnIndex, boolean ascending) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
+        CSVTable table = getTable().get();
 
         setLoading(true);
         new SwingWorker<CSVTable, Void>() {
@@ -262,11 +255,10 @@ public final class GUIController extends CoreController {
     }
 
     public void onColumnSelected(int columnIndex) {
-        CSVTable table = getTable();
-        if (table == null) {
+        if (getTable().isEmpty()) {
             return;
         }
-
+        CSVTable table = getTable().get();
         setLoading(true);
         new SwingWorker<Void, Void>() {
             private Optional<String> min;

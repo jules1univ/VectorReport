@@ -1,10 +1,11 @@
-package fr.univrennes.istic.l2gen.application.gui.panels.table;
+package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
+import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 import javax.swing.table.AbstractTableModel;
 
-final class TableModel extends AbstractTableModel {
+public final class TableModel extends AbstractTableModel {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
