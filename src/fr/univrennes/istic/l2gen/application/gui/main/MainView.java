@@ -24,8 +24,6 @@ import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 
 public final class MainView extends JFrame {
 
-    private final GUIController controller;
-
     private final TablePanel tablePanel;
     private final ChartPanel chartPanel;
     private final ChartSettingPanel chartSettingPanel;
@@ -41,8 +39,6 @@ public final class MainView extends JFrame {
     private boolean settingsVisible = true;
 
     public MainView(GUIController controller) {
-        this.controller = controller;
-
         this.tablePanel = new TablePanel(controller);
         this.chartPanel = new ChartPanel(controller);
         this.chartSettingPanel = new ChartSettingPanel(controller);

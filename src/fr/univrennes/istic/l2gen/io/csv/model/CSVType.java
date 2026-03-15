@@ -46,7 +46,29 @@ public enum CSVType {
     }
 
     public static CSVType inferType(String value) {
-        return value == null ? CSVType.EMPTY : fromClass(inferClass(value).orElse(String.class));
+        if (value == null || value.isBlank()) {
+            return EMPTY;
+        }
+
+        if (isBoolean(value)) {
+            return BOOLEAN;
+        }
+        if (isInteger(value)) {
+            return INTEGER;
+        }
+        if (isFloating(value)) {
+            return DOUBLE;
+        }
+        if (isPercentage(value)) {
+            return PERCENTAGE;
+        }
+        if (isUrl(value)) {
+            return URL;
+        }
+        if (isDate(value)) {
+            return DATE;
+        }
+        return STRING;
     }
 
     public static Optional<Class<?>> fromType(CSVType type) {
@@ -90,30 +112,30 @@ public enum CSVType {
         return CSVType.EMPTY;
     }
 
-    public static <T> Optional<T> parseValue(String value, Class<T> cls) {
+    public static <T> T parseValue(String value, Class<T> cls) {
         try {
             if (cls == Boolean.class) {
                 String normalized = value.toLowerCase();
                 if (normalized.equals("true") || normalized.equals("yes") || normalized.equals("1")) {
-                    return Optional.of(cls.cast(Boolean.TRUE));
+                    return cls.cast(Boolean.TRUE);
                 } else if (normalized.equals("false") || normalized.equals("no") || normalized.equals("0")) {
-                    return Optional.of(cls.cast(Boolean.FALSE));
+                    return cls.cast(Boolean.FALSE);
                 }
             } else if (cls == Integer.class) {
-                return Optional.of(cls.cast(Integer.parseInt(value)));
+                return cls.cast(Integer.parseInt(value));
             } else if (cls == Double.class) {
-                return Optional.of(cls.cast(Double.parseDouble(value)));
+                return cls.cast(Double.parseDouble(value));
             } else if (cls == URI.class) {
-                return Optional.of(cls.cast(new URI(value)));
+                return cls.cast(new URI(value));
             } else if (cls == LocalDate.class) {
-                return Optional.of(cls.cast(LocalDate.parse(value)));
+                return cls.cast(LocalDate.parse(value));
             } else if (cls == String.class) {
-                return Optional.of(cls.cast(value));
+                return cls.cast(value);
             }
         } catch (Exception e) {
         }
 
-        return Optional.empty();
+        return null;
     }
 
     public static boolean isNumeric(String value) {

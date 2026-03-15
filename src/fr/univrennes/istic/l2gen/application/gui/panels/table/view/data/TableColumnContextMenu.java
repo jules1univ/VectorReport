@@ -7,19 +7,18 @@ import javax.swing.JPopupMenu;
 
 import fr.univrennes.istic.l2gen.application.core.services.stats.CorrelationType;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
-import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVType;
 
 public final class TableColumnContextMenu extends JPopupMenu {
 
     private final GUIController controller;
-    private final TablePanel tablePanel;
+    private final TableDataView tableView;
     private final int columnIndex;
 
-    public TableColumnContextMenu(TablePanel tablePanel, GUIController controller,
+    public TableColumnContextMenu(TableDataView tableView, GUIController controller,
             int columnIndex) {
         this.controller = controller;
-        this.tablePanel = tablePanel;
+        this.tableView = tableView;
         this.columnIndex = columnIndex;
 
         add(buildSortMenu());
@@ -32,16 +31,16 @@ public final class TableColumnContextMenu extends JPopupMenu {
 
         JMenuItem renameColumnItem = new JMenuItem("Rename column");
         renameColumnItem.addActionListener(e -> {
-            String newName = JOptionPane.showInputDialog(tablePanel, "New column name:",
-                    tablePanel.getTable().getColumnName(columnIndex));
+            String newName = JOptionPane.showInputDialog(tableView, "New column name:",
+                    tableView.getTable().getColumnName(columnIndex));
             if (newName != null && !newName.isBlank()) {
-                tablePanel.renameColumn(columnIndex, newName);
+                tableView.renameColumn(columnIndex, newName);
             }
         });
         add(renameColumnItem);
 
         JMenuItem hideColumnItem = new JMenuItem("Hide column");
-        hideColumnItem.addActionListener(e -> tablePanel.hideColumn(columnIndex));
+        hideColumnItem.addActionListener(e -> tableView.hideColumn(columnIndex));
 
         JMenuItem removeColumnItem = new JMenuItem("Remove column");
         removeColumnItem.addActionListener(e -> controller.onColumnRemoveRequested(columnIndex));
@@ -76,37 +75,37 @@ public final class TableColumnContextMenu extends JPopupMenu {
 
         JMenuItem filterTopNItem = new JMenuItem("Top N values");
         filterTopNItem.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(tablePanel, "Show top N values:");
+            String input = JOptionPane.showInputDialog(tableView, "Show top N values:");
             if (input != null && !input.isBlank()) {
                 try {
                     int n = Integer.parseInt(input.trim());
                     controller.onFilterTopNRequested(columnIndex, n, true);
                 } catch (NumberFormatException ignored) {
-                    JOptionPane.showMessageDialog(tablePanel, "Please enter a valid integer.");
+                    JOptionPane.showMessageDialog(tableView, "Please enter a valid integer.");
                 }
             }
         });
 
         JMenuItem filterBottomNItem = new JMenuItem("Bottom N values");
         filterBottomNItem.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(tablePanel, "Show bottom N values:");
+            String input = JOptionPane.showInputDialog(tableView, "Show bottom N values:");
             if (input != null && !input.isBlank()) {
                 try {
                     int n = Integer.parseInt(input.trim());
                     controller.onFilterTopNRequested(columnIndex, n, false);
                 } catch (NumberFormatException ignored) {
-                    JOptionPane.showMessageDialog(tablePanel, "Please enter a valid integer.");
+                    JOptionPane.showMessageDialog(tableView, "Please enter a valid integer.");
                 }
             }
         });
 
         JMenuItem filterNumericRangeItem = new JMenuItem("By numeric range");
         filterNumericRangeItem.addActionListener(e -> {
-            String minInput = JOptionPane.showInputDialog(tablePanel, "Minimum value:");
+            String minInput = JOptionPane.showInputDialog(tableView, "Minimum value:");
             if (minInput == null) {
                 return;
             }
-            String maxInput = JOptionPane.showInputDialog(tablePanel, "Maximum value:");
+            String maxInput = JOptionPane.showInputDialog(tableView, "Maximum value:");
             if (maxInput == null) {
                 return;
             }
@@ -115,7 +114,7 @@ public final class TableColumnContextMenu extends JPopupMenu {
                 double max = Double.parseDouble(maxInput.trim());
                 controller.onFilterByRangeRequested(columnIndex, min, max);
             } catch (NumberFormatException ignored) {
-                JOptionPane.showMessageDialog(tablePanel, "Please enter valid numbers.");
+                JOptionPane.showMessageDialog(tableView, "Please enter valid numbers.");
             }
         });
 
@@ -147,12 +146,12 @@ public final class TableColumnContextMenu extends JPopupMenu {
         JMenu spearmanMenu = new JMenu("Spearman correlation");
         JMenu kendallMenu = new JMenu("Kendall's tau correlation");
 
-        for (int i = 0; i < tablePanel.getTable().getColumnCount(); i++) {
+        for (int i = 0; i < tableView.getTable().getColumnCount(); i++) {
             if (i == columnIndex) {
                 continue;
             }
             int targetColumnIndex = i;
-            String columnName = tablePanel.getTable().getColumnName(i);
+            String columnName = tableView.getTable().getColumnName(i);
 
             JMenuItem pearsonItem = new JMenuItem(columnName);
             pearsonItem.addActionListener(
@@ -178,6 +177,9 @@ public final class TableColumnContextMenu extends JPopupMenu {
         correlateMenu.add(kendallMenu);
         correlateMenu.add(valueDistributionItem);
         correlateMenu.addSeparator();
+
+        // Gain d'information
+        // Hentropy
         return correlateMenu;
     }
 

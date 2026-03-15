@@ -14,7 +14,7 @@ public final class FilterService implements IService {
 
     public CSVTable sortByColumn(CSVTable table, int columnIndex, boolean ascending) {
         if (table.getRowCount() == 0 || columnIndex < 0
-                || columnIndex >= table.getHeader().orElse(new CSVRow()).size()) {
+                || columnIndex >= table.getColumnCount()) {
             return table;
         }
 

@@ -88,7 +88,8 @@ public final class TablePagination extends JPanel {
         nextPageButton.setEnabled(currentPage < totalPages);
         lastPageButton.setEnabled(currentPage < totalPages);
 
-        boolean showCombobox = this.controller.getTable().map(CSVTable::getRowCount).orElse(0) >= PAGE_SIZE_OPTIONS[0];
+        boolean showCombobox = this.controller.getCurrentTable().map(CSVTable::getRowCount)
+                .orElse(0) >= PAGE_SIZE_OPTIONS[0];
         pageSizeComboBox.setVisible(showCombobox);
     }
 }

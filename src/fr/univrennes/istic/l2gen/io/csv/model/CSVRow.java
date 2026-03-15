@@ -1,131 +1,84 @@
 package fr.univrennes.istic.l2gen.io.csv.model;
 
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Optional;
 
-public final class CSVRow {
+public final class CSVRow extends CSVVirtualData {
 
-    private static final int DEFAULT_CAPACITY = 8;
-    private static final float GROWTH_FACTOR = 1.5f;
-
-    private String[] cells;
-    private int size;
-
-    private CSVColumn[] columnView;
-    private int rowIndexInColumns;
-    private boolean isMaterialized;
-
-    public CSVRow() {
-        this.cells = new String[DEFAULT_CAPACITY];
-        this.size = 0;
-        this.isMaterialized = true;
+    public CSVRow(CSVTable table, int rowIndex) {
+        super(table, rowIndex);
     }
 
     public CSVRow(String[] cells) {
-        this.size = cells.length;
-        this.cells = new String[this.size];
-        for (int i = 0; i < this.size; i++) {
-            this.cells[i] = normalize(cells[i]);
-        }
-        this.isMaterialized = true;
+        super(cells);
     }
 
-    public CSVRow(CSVRow other) {
-        if (other.isMaterialized) {
-            this.size = other.size;
-            this.cells = new String[other.size];
-            System.arraycopy(other.cells, 0, this.cells, 0, other.size);
-        } else {
-            this.size = other.size;
-            this.cells = new String[other.size];
-            for (int i = 0; i < other.size; i++) {
-                this.cells[i] = other.columnView[i].getRawCell(other.rowIndexInColumns);
+    @Override
+    public Optional<String> getCell(int colIndex) {
+        if (cells != null) {
+            if (colIndex < 0 || colIndex >= cells.length) {
+                throw new IndexOutOfBoundsException("Column index out of bounds");
             }
+            return Optional.ofNullable(cells[colIndex]);
         }
-        this.isMaterialized = true;
-    }
 
-    static CSVRow virtualRow(CSVColumn[] columns, int rowIndex) {
-        CSVRow row = new CSVRow();
-        row.columnView = columns;
-        row.rowIndexInColumns = rowIndex;
-        row.size = columns.length;
-        row.cells = null;
-        row.isMaterialized = false;
-        return row;
-    }
-
-    public String getRawCell(int index) {
-        if (!isMaterialized) {
-            return columnView[index].getRawCell(rowIndexInColumns);
+        if (table == null) {
+            throw new IllegalStateException("Row is not associated with a table");
         }
-        return cells[index];
-    }
-
-    public Optional<String> getCell(int index) {
-        return Optional.ofNullable(getRawCell(index));
-    }
-
-    public String[] getCells() {
-        if (!isMaterialized) {
-            materialize();
+        if (colIndex < 0 || colIndex >= table.getColumnCount()) {
+            throw new IndexOutOfBoundsException("Column index out of bounds");
         }
-        return cells;
+        return table.getCell(this.virtualIndex, colIndex);
     }
 
+    @Override
+    public String getRawCell(int colIndex) {
+        if (cells != null) {
+            if (colIndex < 0 || colIndex >= cells.length) {
+                throw new IndexOutOfBoundsException("Column index out of bounds");
+            }
+            return cells[colIndex];
+        }
+        if (table == null) {
+            throw new IllegalStateException("Row is not associated with a table");
+        }
+        if (colIndex < 0 || colIndex >= table.getColumnCount()) {
+            throw new IndexOutOfBoundsException("Column index out of bounds");
+        }
+        return table.getRawCell(this.virtualIndex, colIndex);
+    }
+
+    @Override
     public int size() {
-        return size;
+        if (cells != null) {
+            return cells.length;
+        }
+        if (table == null) {
+            throw new IllegalStateException("Row is not associated with a table");
+        }
+        return table.getColumnCount();
     }
 
-    public void addCell(String value) {
-        if (!isMaterialized) {
-            materialize();
-        }
-        ensureCapacity(size + 1);
-        cells[size] = normalize(value);
-        size++;
-    }
+    @Override
+    public Iterator<Optional<String>> iterator() {
+        return new Iterator<Optional<String>>() {
+            private int currentIndex = 0;
 
-    public void removeCell(int index) {
-        if (!isMaterialized) {
-            materialize();
-        }
-        if (index < 0 || index >= size) {
-            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
-        }
-        System.arraycopy(cells, index + 1, cells, index, size - index - 1);
-        cells[size - 1] = null;
-        size--;
-    }
+            @Override
+            public boolean hasNext() {
+                if (cells != null) {
+                    return currentIndex < cells.length;
+                }
+                return currentIndex < table.getColumnCount();
+            }
 
-    public void trimToSize() {
-        if (!isMaterialized) {
-            return;
-        }
-        if (size == cells.length) {
-            return;
-        }
-        cells = Arrays.copyOf(cells, size);
-    }
-
-    private void materialize() {
-        cells = new String[size];
-        for (int i = 0; i < size; i++) {
-            cells[i] = columnView[i].getRawCell(rowIndexInColumns);
-        }
-        columnView = null;
-        isMaterialized = true;
-    }
-
-    private void ensureCapacity(int minCapacity) {
-        if (minCapacity <= cells.length) {
-            return;
-        }
-        int newCapacity = Math.max(minCapacity, (int) (cells.length * GROWTH_FACTOR) + 1);
-        cells = Arrays.copyOf(cells, newCapacity);
-    }
-
-    private static String normalize(String value) {
-        return (value == null || value.isEmpty()) ? null : value;
+            @Override
+            public Optional<String> next() {
+                if (cells != null) {
+                    return Optional.ofNullable(cells[currentIndex++]);
+                }
+                return table.getCell(virtualIndex, currentIndex++);
+            }
+        };
     }
 }

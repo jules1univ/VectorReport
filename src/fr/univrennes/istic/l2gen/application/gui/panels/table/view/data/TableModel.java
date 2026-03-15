@@ -1,6 +1,5 @@
 package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
-import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 import javax.swing.table.AbstractTableModel;
@@ -9,7 +8,7 @@ public final class TableModel extends AbstractTableModel {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
-    private final TablePanel tablePanel;
+    private final TableDataView tableView;
 
     private CSVTable source;
     private String[] columnNames;
@@ -18,10 +17,10 @@ public final class TableModel extends AbstractTableModel {
     private int pageSize;
     private int columnCount;
 
-    public TableModel(TablePanel tablePanel) {
+    public TableModel(TableDataView tableView) {
         this.pageSize = DEFAULT_PAGE_SIZE;
         this.pageIndex = 0;
-        this.tablePanel = tablePanel;
+        this.tableView = tableView;
     }
 
     public void load(CSVTable data) {
@@ -39,7 +38,7 @@ public final class TableModel extends AbstractTableModel {
         }
         this.pageIndex = newPageIndex;
         fireTableDataChanged();
-        tablePanel.adjustColumnWidths();
+        tableView.adjustColumnWidths();
     }
 
     public void nextPage() {
@@ -90,7 +89,7 @@ public final class TableModel extends AbstractTableModel {
         int colCount = data.getColumnCount();
         String[] names = new String[colCount];
         if (data.getHeader().isPresent()) {
-            String[] headerCells = data.getHeader().get().getCells();
+            String[] headerCells = data.getRawHeader();
             for (int i = 0; i < colCount; i++) {
                 String cell = (i < headerCells.length) ? headerCells[i] : null;
                 names[i] = (cell == null) ? "Column " + (i + 1) : cell;
@@ -127,7 +126,7 @@ public final class TableModel extends AbstractTableModel {
             return null;
         }
         int absoluteRowIndex = getPageStartRow() + rowIndex;
-        return source.getColumn(columnIndex).getRawCell(absoluteRowIndex);
+        return source.getRawCell(absoluteRowIndex, columnIndex);
     }
 
     @Override

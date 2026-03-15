@@ -27,12 +27,14 @@ public final class TableDataView extends JPanel {
     public TableDataView(TablePanel tablePanel, GUIController controller) {
         super(new BorderLayout());
 
-        tableModel = new TableModel(null);
+        tableModel = new TableModel(this);
         table = new JTable(tableModel);
         table.setFillsViewportHeight(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setRowSorter(null);
         table.getTableHeader().setReorderingAllowed(false);
+
+        TableDataView selfView = this;
 
         table.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
@@ -42,7 +44,7 @@ public final class TableDataView extends JPanel {
                     return;
                 }
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    TableColumnContextMenu contextMenu = new TableColumnContextMenu(tablePanel, controller,
+                    TableColumnContextMenu contextMenu = new TableColumnContextMenu(selfView, controller,
                             clickedColumnIndex);
                     contextMenu.show(table.getTableHeader(), e.getX(), e.getY());
                 } else if (SwingUtilities.isLeftMouseButton(e)) {
@@ -59,21 +61,21 @@ public final class TableDataView extends JPanel {
         add(paginationBar, BorderLayout.SOUTH);
     }
 
-    void load(CSVTable data) {
+    public void load(CSVTable data) {
         tableModel.load(data);
         paginationBar.refresh();
         adjustColumnWidths();
     }
 
-    JTable getTable() {
+    public JTable getTable() {
         return table;
     }
 
-    TableModel getTableModel() {
+    public TableModel getTableModel() {
         return tableModel;
     }
 
-    void hideColumn(int columnIndex) {
+    public void hideColumn(int columnIndex) {
         TableColumnModel columnModel = table.getColumnModel();
         if (columnIndex < 0 || columnIndex >= columnModel.getColumnCount()) {
             return;
@@ -81,7 +83,7 @@ public final class TableDataView extends JPanel {
         table.removeColumn(columnModel.getColumn(columnIndex));
     }
 
-    void renameColumn(int columnIndex, String newName) {
+    public void renameColumn(int columnIndex, String newName) {
         TableColumnModel columnModel = table.getColumnModel();
         if (columnIndex < 0 || columnIndex >= columnModel.getColumnCount()) {
             return;
@@ -90,7 +92,7 @@ public final class TableDataView extends JPanel {
         table.getTableHeader().repaint();
     }
 
-    void showAllColumns(int totalColumnCount) {
+    public void showAllColumns(int totalColumnCount) {
         TableColumnModel columnModel = table.getColumnModel();
         for (int modelIndex = 0; modelIndex < totalColumnCount; modelIndex++) {
             boolean alreadyVisible = false;
@@ -109,7 +111,7 @@ public final class TableDataView extends JPanel {
         adjustColumnWidths();
     }
 
-    void openAdvancedFilterDialog(GUIController controller) {
+    public void openAdvancedFilterDialog(GUIController controller) {
         Window parentWindow = SwingUtilities.getWindowAncestor(this);
         int columnCount = table.getColumnCount();
         String[] columnNames = new String[columnCount];
@@ -120,7 +122,7 @@ public final class TableDataView extends JPanel {
         filterDialog.setVisible(true);
     }
 
-    void selectColumn(int columnIndex) {
+    public void selectColumn(int columnIndex) {
         TableColumnModel columnModel = table.getColumnModel();
         if (columnIndex < 0 || columnIndex >= columnModel.getColumnCount()) {
             return;
@@ -133,7 +135,7 @@ public final class TableDataView extends JPanel {
         table.setColumnSelectionInterval(columnIndex, columnIndex);
     }
 
-    void adjustColumnWidths() {
+    public void adjustColumnWidths() {
         int sampleRowCount = Math.min(table.getRowCount(), 50);
         for (int columnIndex = 0; columnIndex < table.getColumnCount(); columnIndex++) {
             int maxWidth = 0;

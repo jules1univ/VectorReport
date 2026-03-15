@@ -26,7 +26,7 @@ public final class StatsService implements IService {
             case BOOLEAN:
                 return Optional.of(computeBooleanMajority(column));
             case DATE:
-                return column.streamCells(LocalDate.class)
+                return column.streamTyped(LocalDate.class)
                         .mapToLong(LocalDate::toEpochDay)
                         .min()
                         .stream()
@@ -34,7 +34,7 @@ public final class StatsService implements IService {
                         .findFirst();
             case STRING:
             case URL:
-                return column.streamCells()
+                return column.streamRaw()
                         .mapToInt(String::length)
                         .min()
                         .stream()
@@ -59,7 +59,7 @@ public final class StatsService implements IService {
             case BOOLEAN:
                 return Optional.of(computeBooleanMajority(column));
             case DATE:
-                return column.streamCells(LocalDate.class)
+                return column.streamTyped(LocalDate.class)
                         .mapToLong(LocalDate::toEpochDay)
                         .max()
                         .stream()
@@ -67,7 +67,7 @@ public final class StatsService implements IService {
                         .findFirst();
             case STRING:
             case URL:
-                return column.streamCells()
+                return column.streamRaw()
                         .mapToInt(String::length)
                         .max()
                         .stream()
@@ -124,22 +124,22 @@ public final class StatsService implements IService {
     }
 
     private double computeNumericCorrelation(CSVColumn column1, CSVColumn column2, CorrelationType corrType) {
-        double[] values1 = column1.streamCells(Double.class).mapToDouble(Double::doubleValue).toArray();
-        double[] values2 = column2.streamCells(Double.class).mapToDouble(Double::doubleValue).toArray();
+        double[] values1 = column1.streamTyped(Double.class).mapToDouble(Double::doubleValue).toArray();
+        double[] values2 = column2.streamTyped(Double.class).mapToDouble(Double::doubleValue).toArray();
         return dispatchCorrelation(trimToSharedLength(values1, values2)[0], trimToSharedLength(values1, values2)[1],
                 corrType);
     }
 
     private double computeDateCorrelation(CSVColumn column1, CSVColumn column2, CorrelationType corrType) {
-        double[] epochDays1 = column1.streamCells(LocalDate.class).mapToDouble(LocalDate::toEpochDay).toArray();
-        double[] epochDays2 = column2.streamCells(LocalDate.class).mapToDouble(LocalDate::toEpochDay).toArray();
+        double[] epochDays1 = column1.streamTyped(LocalDate.class).mapToDouble(LocalDate::toEpochDay).toArray();
+        double[] epochDays2 = column2.streamTyped(LocalDate.class).mapToDouble(LocalDate::toEpochDay).toArray();
         return dispatchCorrelation(trimToSharedLength(epochDays1, epochDays2)[0],
                 trimToSharedLength(epochDays1, epochDays2)[1], corrType);
     }
 
     private double computeStringCorrelation(CSVColumn column1, CSVColumn column2, CorrelationType corrType) {
-        List<String> strings1 = column1.streamCells().collect(Collectors.toList());
-        List<String> strings2 = column2.streamCells().collect(Collectors.toList());
+        List<String> strings1 = column1.streamRaw().collect(Collectors.toList());
+        List<String> strings2 = column2.streamRaw().collect(Collectors.toList());
 
         int sharedLength = Math.min(strings1.size(), strings2.size());
         strings1 = strings1.subList(0, sharedLength);
@@ -222,16 +222,16 @@ public final class StatsService implements IService {
         double result;
         switch (operation) {
             case MIN:
-                result = column.streamCells(Double.class).mapToDouble(Double::doubleValue).min().orElse(0);
+                result = column.streamTyped(Double.class).mapToDouble(Double::doubleValue).min().orElse(0);
                 break;
             case MAX:
-                result = column.streamCells(Double.class).mapToDouble(Double::doubleValue).max().orElse(0);
+                result = column.streamTyped(Double.class).mapToDouble(Double::doubleValue).max().orElse(0);
                 break;
             case AVG:
-                result = column.streamCells(Double.class).mapToDouble(Double::doubleValue).average().orElse(0);
+                result = column.streamTyped(Double.class).mapToDouble(Double::doubleValue).average().orElse(0);
                 break;
             case SUM:
-                result = column.streamCells(Double.class).mapToDouble(Double::doubleValue).sum();
+                result = column.streamTyped(Double.class).mapToDouble(Double::doubleValue).sum();
                 break;
             default:
                 return Optional.empty();
@@ -245,7 +245,7 @@ public final class StatsService implements IService {
     }
 
     private String computeBooleanMajority(CSVColumn column) {
-        long trueCount = column.streamCells(Boolean.class).filter(Boolean::booleanValue).count();
+        long trueCount = column.streamTyped(Boolean.class).filter(Boolean::booleanValue).count();
         return trueCount >= column.size() / 2 ? "true" : "false";
     }
 

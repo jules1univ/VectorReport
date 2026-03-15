@@ -3,6 +3,7 @@
 /target
 /.metals
 *.db
+*.jar
 
 # Resultat de l'app
 /*.svg

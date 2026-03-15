@@ -46,7 +46,7 @@ public final class TableListView extends JPanel {
         add(new JScrollPane(tableList), BorderLayout.CENTER);
     }
 
-    void refresh(GUIController controller) {
+    public void refresh(GUIController controller) {
         listModel.setRowCount(0);
         for (String tableName : controller.getLoader().getTablesName()) {
             CSVTable csvTable = controller.getLoader().getTable(tableName);
@@ -54,7 +54,7 @@ public final class TableListView extends JPanel {
         }
     }
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return listModel.getRowCount() == 0;
     }
 }

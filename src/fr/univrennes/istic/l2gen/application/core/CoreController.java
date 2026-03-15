@@ -12,7 +12,8 @@ import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public abstract class CoreController {
 
-    private CSVTable table;
+    private CSVTable mainTable;
+    private CSVTable currentTable;
 
     private final ChartService chart;
     private final ConverterService converter;
@@ -54,11 +55,19 @@ public abstract class CoreController {
         return this.report;
     }
 
-    public final Optional<CSVTable> getTable() {
-        return Optional.ofNullable(table);
+    public final Optional<CSVTable> getMainTable() {
+        return Optional.ofNullable(mainTable);
     }
 
-    public void setTable(CSVTable table) {
-        this.table = table;
+    public final void setMainTable(CSVTable table) {
+        this.mainTable = table;
+    }
+
+    public final Optional<CSVTable> getCurrentTable() {
+        return Optional.ofNullable(currentTable);
+    }
+
+    public void setCurrentTable(CSVTable table) {
+        this.currentTable = table;
     }
 }

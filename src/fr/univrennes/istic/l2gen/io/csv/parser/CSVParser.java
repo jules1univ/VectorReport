@@ -8,28 +8,26 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
-import fr.univrennes.istic.l2gen.io.csv.model.CSVRow;
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 public final class CSVParser {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 64;
 
-    private Character delimiter = null;
     private final char quoteChar;
     private final boolean hasHeaders;
     private final boolean trimWhitespace;
+    private final Character configuredDelimiter;
 
     public CSVParser(char quoteChar, boolean hasHeaders, boolean trimWhitespace) {
-        this.delimiter = null;
+        this.configuredDelimiter = null;
         this.quoteChar = quoteChar;
         this.hasHeaders = hasHeaders;
         this.trimWhitespace = trimWhitespace;
     }
 
     public CSVParser(char delimiter, char quoteChar, boolean hasHeaders, boolean trimWhitespace) {
-        this.delimiter = delimiter;
+        this.configuredDelimiter = delimiter;
         this.quoteChar = quoteChar;
         this.hasHeaders = hasHeaders;
         this.trimWhitespace = trimWhitespace;
@@ -48,43 +46,36 @@ public final class CSVParser {
     }
 
     public CSVTable parse(Reader reader) throws CSVParseException {
-        CSVRow[] headerHolder = { null };
-        List<CSVRow> rows = new ArrayList<>();
+        List<String[]> data = new ArrayList<>();
+        char activeDelimiter = configuredDelimiter != null ? configuredDelimiter : 0;
+        int expectedRowSize = -1;
 
-        this.stream(reader, (row) -> {
-            if (hasHeaders && headerHolder[0] == null) {
-                headerHolder[0] = row;
-            } else {
-                rows.add(row);
-            }
-        });
-
-        return new CSVTable(headerHolder[0], rows);
-    }
-
-    public void stream(File file, Consumer<CSVRow> rowConsumer) throws CSVParseException {
-        try (FileReader reader = new FileReader(file)) {
-            stream(reader, rowConsumer);
-        } catch (IOException e) {
-            throw new CSVParseException("Error reading file: " + file.getAbsolutePath(), e);
-        }
-    }
-
-    public void stream(Reader reader, Consumer<CSVRow> rowConsumer) throws CSVParseException {
-        try (BufferedReader br = new BufferedReader(reader, DEFAULT_BUFFER_SIZE)) {
+        try (BufferedReader bufferedReader = new BufferedReader(reader, DEFAULT_BUFFER_SIZE)) {
             String line;
             int lineNumber = 0;
 
-            while ((line = br.readLine()) != null) {
+            while ((line = bufferedReader.readLine()) != null) {
                 lineNumber++;
                 if (line.isEmpty()) {
                     continue;
                 }
 
+                if (activeDelimiter == 0) {
+                    activeDelimiter = detectDelimiter(line);
+                }
+
                 try {
-                    CSVRow row = parseLine(line);
-                    row.trimToSize();
-                    rowConsumer.accept(row);
+                    List<String> fields = parseLine(line, activeDelimiter);
+
+                    if (expectedRowSize == -1) {
+                        expectedRowSize = fields.size();
+                    } else if (fields.size() != expectedRowSize) {
+                        throw new CSVParseException(
+                                "Expected " + expectedRowSize + " fields but got " + fields.size(),
+                                lineNumber);
+                    }
+
+                    data.add(fields.toArray(new String[0]));
                 } catch (CSVParseException e) {
                     throw new CSVParseException(e.getMessage(), lineNumber);
                 }
@@ -92,44 +83,41 @@ public final class CSVParser {
         } catch (IOException e) {
             throw new CSVParseException("Error reading CSV data", e);
         }
+
+        return new CSVTable(data, hasHeaders);
     }
 
-    private CSVRow parseLine(String line) throws CSVParseException {
-        if (this.delimiter == null) {
-            this.detectDelimiter(line);
-        }
-
-        CSVRow row = new CSVRow();
-
+    private List<String> parseLine(String line, char delimiter) throws CSVParseException {
+        List<String> fields = new ArrayList<>();
         char[] buffer = new char[line.length()];
-        int length = 0;
-
+        int bufferLength = 0;
         boolean inQuotes = false;
         boolean fieldStarted = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
 
-            if (c == quoteChar) {
+        for (int charIndex = 0; charIndex < line.length(); charIndex++) {
+            char currentChar = line.charAt(charIndex);
+
+            if (currentChar == quoteChar) {
                 if (inQuotes) {
-                    if (i + 1 < line.length() && line.charAt(i + 1) == quoteChar) {
-                        buffer[length++] = quoteChar;
-                        i++;
+                    if (charIndex + 1 < line.length() && line.charAt(charIndex + 1) == quoteChar) {
+                        buffer[bufferLength++] = quoteChar;
+                        charIndex++;
                     } else {
                         inQuotes = false;
                     }
                 } else {
-                    if (fieldStarted && length > 0) {
+                    if (fieldStarted && bufferLength > 0) {
                         throw new CSVParseException("Unexpected quote character in field");
                     }
                     inQuotes = true;
                 }
                 fieldStarted = true;
-            } else if (c == delimiter && !inQuotes) {
-                row.addCell(extractField(buffer, length));
-                length = 0;
+            } else if (currentChar == delimiter && !inQuotes) {
+                fields.add(extractField(buffer, bufferLength));
+                bufferLength = 0;
                 fieldStarted = false;
             } else {
-                buffer[length++] = c;
+                buffer[bufferLength++] = currentChar;
                 fieldStarted = true;
             }
         }
@@ -138,19 +126,19 @@ public final class CSVParser {
             throw new CSVParseException("Unclosed quote in line");
         }
 
-        row.addCell(extractField(buffer, length));
-        return row;
+        fields.add(extractField(buffer, bufferLength));
+        return fields;
     }
 
-    private void detectDelimiter(String line) {
-        char[] options = { ',', ';', '\t', '|', ':' };
-        int[] counts = new int[options.length];
+    private char detectDelimiter(String line) {
+        char[] candidates = { ',', ';', '\t', '|', ':' };
+        int[] counts = new int[candidates.length];
 
         boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
+        for (int charIndex = 0; charIndex < line.length(); charIndex++) {
+            char currentChar = line.charAt(charIndex);
 
-            if (c == quoteChar) {
+            if (currentChar == quoteChar) {
                 inQuotes = !inQuotes;
                 continue;
             }
@@ -158,42 +146,35 @@ public final class CSVParser {
                 continue;
             }
 
-            for (int j = 0; j < options.length; j++) {
-                if (c == options[j]) {
-                    counts[j]++;
+            for (int candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
+                if (currentChar == candidates[candidateIndex]) {
+                    counts[candidateIndex]++;
                 }
             }
-
         }
 
         int bestIndex = 0;
-        for (int j = 1; j < options.length; j++) {
-            if (counts[j] > counts[bestIndex]) {
-                bestIndex = j;
-
+        for (int candidateIndex = 1; candidateIndex < candidates.length; candidateIndex++) {
+            if (counts[candidateIndex] > counts[bestIndex]) {
+                bestIndex = candidateIndex;
             }
         }
 
-        this.delimiter = counts[bestIndex] > 0 ? options[bestIndex] : ',';
+        return counts[bestIndex] > 0 ? candidates[bestIndex] : ',';
     }
 
-    private String extractField(char[] buf, int len) {
-        if (len == 0) {
-            return null;
-        }
-
+    private String extractField(char[] buffer, int length) {
         if (trimWhitespace) {
-            int start = 0, end = len;
-            while (start < end && buf[start] <= ' ') {
+            int start = 0;
+            int end = length;
+            while (start < end && buffer[start] <= ' ') {
                 start++;
             }
-
-            while (end > start && buf[end - 1] <= ' ') {
+            while (end > start && buffer[end - 1] <= ' ') {
                 end--;
             }
-
-            return (end > start) ? new String(buf, start, end - start) : null;
+            return new String(buffer, start, end - start);
         }
-        return new String(buf, 0, len);
+        return new String(buffer, 0, length);
     }
 }

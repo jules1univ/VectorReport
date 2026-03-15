@@ -140,7 +140,7 @@ public class TestCSVParser {
 
     @Test
     public void testSemicolonDelimiter() throws CSVParseException {
-        CSVTable table = new CSVParser(';', '"', true, true).parse("a;b;c");
+        CSVTable table = new CSVParser(';', '"', false, true).parse("a;b;c");
         CSVRow row = table.getRows().get(0);
         assertEquals("a", row.getCell(0).get());
         assertEquals("b", row.getCell(1).get());
@@ -149,7 +149,7 @@ public class TestCSVParser {
 
     @Test
     public void testTabDelimiter() throws CSVParseException {
-        CSVTable table = new CSVParser('\t', '"', true, true).parse("a\tb\tc");
+        CSVTable table = new CSVParser('\t', '"', false, true).parse("a\tb\tc");
         CSVRow row = table.getRows().get(0);
         assertEquals("a", row.getCell(0).get());
         assertEquals("b", row.getCell(1).get());

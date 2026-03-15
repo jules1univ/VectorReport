@@ -11,7 +11,7 @@ public final class EmptyView extends JPanel {
     public EmptyView(GUIController controller) {
         super(new GridBagLayout());
         JButton loadButton = new JButton("Load a table");
-        loadButton.addActionListener(e -> controller.openFileOrFolder());
+        loadButton.addActionListener(e -> controller.onLoadResourceRequested(false));
         add(loadButton);
     }
 }

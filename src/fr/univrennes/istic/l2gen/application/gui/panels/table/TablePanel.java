@@ -7,7 +7,6 @@ import fr.univrennes.istic.l2gen.application.gui.panels.table.view.list.TableLis
 import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 import javax.swing.JPanel;
-import javax.swing.JTable;
 import javax.swing.SwingWorker;
 import java.awt.CardLayout;
 
@@ -38,10 +37,6 @@ public final class TablePanel extends JPanel {
         showEmpty();
     }
 
-    public JTable getTable() {
-        return tableDataView.getTable();
-    }
-
     public void hideColumn(int columnIndex) {
         tableDataView.hideColumn(columnIndex);
     }
@@ -59,7 +54,7 @@ public final class TablePanel extends JPanel {
     }
 
     public void showAllColumns() {
-        int totalColumns = controller.getTable().map(CSVTable::getColumnCount).orElse(0);
+        int totalColumns = controller.getCurrentTable().map(CSVTable::getColumnCount).orElse(0);
         tableDataView.showAllColumns(totalColumns);
     }
 

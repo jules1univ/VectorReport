@@ -16,11 +16,11 @@ public final class TopBar extends JMenuBar {
         JMenu file = new JMenu("File");
 
         JMenuItem openItem = new JMenuItem("Open");
-        openItem.addActionListener(e -> controller.openFileOrFolder());
+        openItem.addActionListener(e -> controller.onLoadResourceRequested(false));
         file.add(openItem);
 
         JMenuItem openUrlItem = new JMenuItem("Open URL");
-        openUrlItem.addActionListener(e -> controller.openUrl());
+        openUrlItem.addActionListener(e -> controller.onLoadResourceRequested(true));
         file.add(openUrlItem);
 
         JMenuItem exitItem = new JMenuItem("Exit");

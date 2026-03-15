@@ -35,10 +35,10 @@ import fr.univrennes.istic.l2gen.application.gui.GUIController;
 
 public class ChartSettingPanel extends JPanel {
 
-    private final GUIController controller;
+    // private final GUIController controller;
 
     public ChartSettingPanel(GUIController controller) {
-        this.controller = controller;
+        // this.controller = controller;
         build();
     }
 

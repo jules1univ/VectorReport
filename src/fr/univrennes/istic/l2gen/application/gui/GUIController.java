@@ -33,7 +33,44 @@ public final class GUIController extends CoreController {
         return mainView;
     }
 
-    public void openFileOrFolder() {
+    public void onLoadResourceRequested(boolean isUrl) {
+        if (isUrl) {
+            String url = JOptionPane.showInputDialog(mainView, "URL", "Load from url",
+                    JOptionPane.PLAIN_MESSAGE);
+            if (url != null && !url.trim().isEmpty()) {
+                try {
+                    URI uri = URI.create(url);
+
+                    setLoading(true);
+                    setStatus("Loading from URL: " + uri);
+
+                    new SwingWorker<Void, Void>() {
+                        @Override
+                        protected Void doInBackground() throws Exception {
+                            long startTime = System.currentTimeMillis();
+                            int tablesLoaded = getLoader().loadUrl(uri, true).size();
+                            long endTime = System.currentTimeMillis();
+
+                            setStatus(String.format("Loaded %d tables from URL in %.2f seconds", tablesLoaded,
+                                    (endTime - startTime) / 1000.0));
+                            return null;
+                        }
+
+                        @Override
+                        protected void done() {
+                            setLoading(false);
+                            onTableLoad();
+                        }
+
+                    }.execute();
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(mainView, "Failed to load from URL: " + e.getMessage(), "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
+            return;
+        }
         SystemFileChooser fileChooser = new SystemFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
 
@@ -76,42 +113,6 @@ public final class GUIController extends CoreController {
         }.execute();
     }
 
-    public void openUrl() {
-        String url = JOptionPane.showInputDialog(mainView, "URL", "Load from url",
-                JOptionPane.PLAIN_MESSAGE);
-        if (url != null && !url.trim().isEmpty()) {
-            try {
-                URI uri = URI.create(url);
-
-                setLoading(true);
-                setStatus("Loading from URL: " + uri);
-
-                new SwingWorker<Void, Void>() {
-                    @Override
-                    protected Void doInBackground() throws Exception {
-                        long startTime = System.currentTimeMillis();
-                        int tablesLoaded = getLoader().loadUrl(uri, true).size();
-                        long endTime = System.currentTimeMillis();
-
-                        setStatus(String.format("Loaded %d tables from URL in %.2f seconds", tablesLoaded,
-                                (endTime - startTime) / 1000.0));
-                        return null;
-                    }
-
-                    @Override
-                    protected void done() {
-                        setLoading(false);
-                        onTableLoad();
-                    }
-
-                }.execute();
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(mainView, "Failed to load from URL: " + e.getMessage(), "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
     public void openDocumentationDialog() {
 
     }
@@ -121,10 +122,10 @@ public final class GUIController extends CoreController {
     }
 
     public void onFilterByCategoryRequested(int columnIndex, boolean percentage) {
-        if (getTable().isEmpty()) {
+        if (getCurrentTable().isEmpty()) {
             return;
         }
-        CSVTable table = getTable().get();
+        CSVTable table = getCurrentTable().get();
 
         setLoading(true);
 
@@ -137,7 +138,7 @@ public final class GUIController extends CoreController {
             @Override
             protected void done() {
                 try {
-                    setTable(get());
+                    setCurrentTable(get());
                 } catch (InterruptedException | ExecutionException exception) {
                     Thread.currentThread().interrupt();
                 } finally {
@@ -147,18 +148,11 @@ public final class GUIController extends CoreController {
         }.execute();
     }
 
-    public void onMultiColumnCorrelationRequested(int columnIndex, List<Integer> targetColumnIndices) {
-        if (getTable().isEmpty()) {
-            return;
-        }
-        CSVTable table = getTable().get();
-    }
-
     public void onCorrelationRequested(int columnIndex, int targetColIndex, CorrelationType type) {
-        if (getTable().isEmpty()) {
+        if (getCurrentTable().isEmpty()) {
             return;
         }
-        CSVTable table = getTable().get();
+        CSVTable table = getCurrentTable().get();
         setLoading(true);
         new SwingWorker<Double, Void>() {
             @Override
@@ -208,31 +202,32 @@ public final class GUIController extends CoreController {
     }
 
     public void onFilterCleared(int columnIndex) {
+
     }
 
     public void onColumnRemoveRequested(int columnIndex) {
-        if (getTable().isEmpty()) {
+        if (getCurrentTable().isEmpty()) {
             return;
         }
-        CSVTable table = getTable().get();
+        CSVTable table = getCurrentTable().get();
         CSVTable copy = new CSVTable(table);
         copy.removeColumn(columnIndex);
-        setTable(copy);
+        setCurrentTable(copy);
     }
 
     public void onColumnTypeChangeRequested(int columnIndex, CSVType newType) {
-        if (getTable().isEmpty()) {
+        if (getCurrentTable().isEmpty()) {
             return;
         }
-        CSVTable table = getTable().get();
-        table.getColumn(columnIndex).setType(newType);
+        CSVTable table = getCurrentTable().get();
+        table.setColumnType(columnIndex, newType);
     }
 
     public void onColumnSortRequested(int columnIndex, boolean ascending) {
-        if (getTable().isEmpty()) {
+        if (getCurrentTable().isEmpty()) {
             return;
         }
-        CSVTable table = getTable().get();
+        CSVTable table = getCurrentTable().get();
 
         setLoading(true);
         new SwingWorker<CSVTable, Void>() {
@@ -244,7 +239,7 @@ public final class GUIController extends CoreController {
             @Override
             protected void done() {
                 try {
-                    setTable(get());
+                    setCurrentTable(get());
                 } catch (InterruptedException | ExecutionException exception) {
                     Thread.currentThread().interrupt();
                 } finally {
@@ -255,10 +250,10 @@ public final class GUIController extends CoreController {
     }
 
     public void onColumnSelected(int columnIndex) {
-        if (getTable().isEmpty()) {
+        if (getCurrentTable().isEmpty()) {
             return;
         }
-        CSVTable table = getTable().get();
+        CSVTable table = getCurrentTable().get();
         setLoading(true);
         new SwingWorker<Void, Void>() {
             private Optional<String> min;
@@ -297,7 +292,10 @@ public final class GUIController extends CoreController {
         }
         if (names.size() == 1) {
             CSVTable table = getLoader().getTable(names.get(0));
-            setTable(table);
+            table.setName(names.get(0));
+            setMainTable(table);
+
+            setCurrentTable(table);
             return;
         }
 
@@ -306,7 +304,7 @@ public final class GUIController extends CoreController {
 
     public void onTableSelected(String tableName) {
         CSVTable table = getLoader().getTable(tableName);
-        setTable(table);
+        setCurrentTable(table);
     }
 
     public void onTableClosed() {
@@ -323,8 +321,8 @@ public final class GUIController extends CoreController {
     }
 
     @Override
-    public void setTable(CSVTable table) {
-        super.setTable(table);
+    public void setCurrentTable(CSVTable table) {
+        super.setCurrentTable(table);
         mainView.getTablePanel().load(table);
 
         String tableName = getLoader().getName(table);

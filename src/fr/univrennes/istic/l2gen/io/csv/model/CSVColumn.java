@@ -1,135 +1,92 @@
 package fr.univrennes.istic.l2gen.io.csv.model;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.Optional;
-import java.util.stream.Stream;
 
-public final class CSVColumn {
-
-    private static final int INTERN_SAMPLE_SIZE = 200;
-    private static final double INTERN_CARDINALITY_THRESHOLD = 0.3;
-
+public final class CSVColumn extends CSVVirtualData {
     private CSVType type;
-    private SharedColumnBuffer buffer;
 
-    public CSVColumn(CSVType type, String[] cells) {
-        this.type = type;
-        String[] interned = internIfLowCardinality(Arrays.copyOf(cells, cells.length));
-        this.buffer = new SharedColumnBuffer(interned, cells.length);
+    public CSVColumn(CSVTable table, int colIndex) {
+        super(table, colIndex);
+        this.type = table.getColumnType(colIndex);
     }
 
-    CSVColumn(CSVType type, String[] cells, int size) {
-        this.type = type;
-        this.buffer = new SharedColumnBuffer(cells, size);
-    }
-
-    private CSVColumn(CSVType type, SharedColumnBuffer sharedBuffer) {
-        this.type = type;
-        this.buffer = sharedBuffer.retain();
-    }
-
-    CSVColumn sharedCopy() {
-        return new CSVColumn(type, buffer);
-    }
-
-    private void ensureWritable(int requiredSize) {
-        if (buffer.isShared()) {
-            buffer = buffer.cloneForWrite(requiredSize);
-        }
-    }
-
-    private static String[] internIfLowCardinality(String[] rawCells) {
-        if (rawCells.length == 0) {
-            return rawCells;
-        }
-        int sampleSize = Math.min(INTERN_SAMPLE_SIZE, rawCells.length);
-        Map<String, Integer> sampleCounts = new HashMap<>();
-        for (int i = 0; i < sampleSize; i++) {
-            String cell = rawCells[i];
-            if (cell != null) {
-                sampleCounts.merge(cell, 1, Integer::sum);
-            }
-        }
-        double cardinality = (double) sampleCounts.size() / sampleSize;
-        if (cardinality > INTERN_CARDINALITY_THRESHOLD) {
-            return rawCells;
-        }
-        Map<String, String> internPool = new HashMap<>(sampleCounts.size() * 2);
-        for (int i = 0; i < rawCells.length; i++) {
-            String cell = rawCells[i];
-            if (cell != null) {
-                rawCells[i] = internPool.computeIfAbsent(cell, k -> k);
-            }
-        }
-        return rawCells;
-    }
-
-    public String getRawCell(int index) {
-        return buffer.get(index);
+    public CSVColumn(String[] cells) {
+        super(cells);
+        this.type = cells.length == 0 ? CSVType.EMPTY : CSVType.inferType(cells[0]);
     }
 
     public CSVType getType() {
         return type;
     }
 
-    public void setType(CSVType type) {
-        this.type = type;
-    }
-
-    public Optional<String> getCell(int index) {
-        return Optional.ofNullable(buffer.get(index));
-    }
-
-    public String[] getCells() {
-        return buffer.rawCells();
-    }
-
-    public Stream<String> streamCells() {
-        int size = buffer.size();
-        return Arrays.stream(buffer.rawCells(), 0, size).filter(cell -> cell != null);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> Stream<T> streamCells(Class<T> clazz) {
-        return streamCells()
-                .map(cell -> {
-                    Optional<T> value = CSVType.parseValue(cell, clazz);
-                    return value.orElse(null);
-                })
-                .filter(value -> value != null);
-    }
-
-    public int size() {
-        return buffer.size();
-    }
-
-    public boolean isEmpty() {
-        int size = buffer.size();
-        for (int i = 0; i < size; i++) {
-            if (buffer.get(i) != null) {
-                return false;
+    @Override
+    public Optional<String> getCell(int rowIndex) {
+        if (cells != null) {
+            if (rowIndex < 0 || rowIndex >= cells.length) {
+                throw new IndexOutOfBoundsException("Row index out of bounds");
             }
+            return Optional.ofNullable(cells[rowIndex]);
         }
-        return true;
+
+        if (table == null) {
+            throw new IllegalStateException("Column is not associated with a table");
+        }
+        if (rowIndex < 0 || rowIndex >= table.getRowCount()) {
+            throw new IndexOutOfBoundsException("Row index out of bounds");
+        }
+        return table.getCell(rowIndex, this.virtualIndex);
     }
 
-    void growTo(int newSize) {
-        ensureWritable(newSize);
-        buffer.growTo(newSize);
+    @Override
+    public String getRawCell(int rowIndex) {
+        if (cells != null) {
+            if (rowIndex < 0 || rowIndex >= cells.length) {
+                throw new IndexOutOfBoundsException("Row index out of bounds");
+            }
+            return cells[rowIndex];
+        }
+        if (table == null) {
+            throw new IllegalStateException("Column is not associated with a table");
+        }
+        if (rowIndex < 0 || rowIndex >= table.getRowCount()) {
+            throw new IndexOutOfBoundsException("Row index out of bounds");
+        }
+        return table.getRawCell(rowIndex, this.virtualIndex);
     }
 
-    void setCell(int index, String value) {
-        ensureWritable(buffer.size());
-        buffer.set(index, value);
+    @Override
+    public int size() {
+        if (cells != null) {
+            return cells.length;
+        }
+        if (table == null) {
+            throw new IllegalStateException("Column is not associated with a table");
+        }
+        return table.getRowCount();
     }
 
-    void removeRowAt(int rowIndex, int currentRowCount) {
-        ensureWritable(currentRowCount);
-        String[] cells = buffer.rawCells();
-        System.arraycopy(cells, rowIndex + 1, cells, rowIndex, currentRowCount - rowIndex - 1);
-        cells[currentRowCount - 1] = null;
-        buffer.growTo(currentRowCount - 1);
+    @Override
+    public Iterator<Optional<String>> iterator() {
+        return new Iterator<Optional<String>>() {
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                if (cells != null) {
+                    return currentIndex < cells.length;
+                }
+                return currentIndex < table.getRowCount();
+            }
+
+            @Override
+            public Optional<String> next() {
+                if (cells != null) {
+                    return Optional.ofNullable(cells[currentIndex++]);
+                }
+                return table.getCell(currentIndex++, virtualIndex);
+            }
+        };
     }
+
 }
