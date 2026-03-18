@@ -63,3 +63,46 @@
 * **Critères d'acceptation :**
     * Boutons First/Previous/Next/Last fonctionnels.
     * Indication du numéro de page actuelle (ex: Page 1/1).
+
+# DOCUMENTATION & QUALITÉ (FINALISATION)
+
+---
+
+## 🛠️ Optimisation du Code Source
+
+### US 07 : Optimisation et mise au propre du code
+**En tant que** développeur,  
+**je veux** nettoyer le code source et supprimer les traces de debug,  
+**afin de** garantir une base de code saine et maintenable pour le futur.  
+* **Critères d'acceptation :**
+    * Suppression des `System.out.println` et des blocs de commentaires de test.
+    * Ajout de la JavaDoc sur les méthodes clés de calcul (`ReportService`).
+    * Respect des conventions de nommage Java (CamelCase) sur l'ensemble des classes et variables.
+
+---
+
+## 📖 Documentation Utilisateur
+
+### US 08 : Création du manuel d'utilisation PDF
+**En tant qu'** utilisateur final,  
+**je veux** disposer d'un guide complet au format PDF avec un sommaire interactif,  
+**afin de** prendre en main l'application de manière autonome et rapide.  
+* **Critères d'acceptation :**
+    * Sommaire cliquable fonctionnel vers les différentes sections du document.
+    * Présence de captures d'écran annotées pour chaque panneau (Filter, Table, Chart).
+    * Mise en page professionnelle incluant un fil d'ariane pour faciliter la navigation.
+
+---
+
+## 📈 Gestion de Projet (Agile)
+
+### US 09 : Structuration du Backlog et des Sprints
+**En tant que** responsable de projet,  
+**je veux** mettre en forme l'ensemble des User Stories et des Sprints en Markdown,  
+**afin de** présenter un dossier de gestion de projet professionnel et parfaitement lisible.  
+* **Critères d'acceptation :**
+    * Toutes les US sont regroupées par catégories logiques (UI, Data, Finalisation).
+    * Utilisation rigoureuse de la syntaxe Markdown (tableaux, listes à puces, mise en gras).
+    * Cohérence visuelle entre les tâches décrites et les fonctionnalités finales de l'application.
+
+---

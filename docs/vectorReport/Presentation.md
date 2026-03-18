@@ -10,7 +10,7 @@
 
 ---
 
-## 🎯 Plan de Présentation (20 minutes)
+## 🎯 Plan de Présentation (10 minutes)
 
 ### Slide 1-2 : Introduction
 - Titre du projet : VectorReport
