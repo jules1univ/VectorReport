@@ -1,4 +1,4 @@
-# FILTER PANEL
+# Sprint 1 : PanelType
 
 ### 🏗️ TODO 1 : Affichage et Sélection de Filtres
 
@@ -63,7 +63,7 @@
 
 #####
 
-# Panel BottomBar
+# Sprint 2 : Panel BottomBar
 
 ### 🏗️ TODO 1 : Affichage des Données et Structure
 
@@ -128,7 +128,7 @@
 
 #####
 
-# MainPanel
+# Sprint 3 : MainPanel
 
 ### 🏗️ TODO 1 : Configuration et Type de Rendu
 
@@ -193,7 +193,7 @@
 
 ####
 
-# MENU BAR PANEL
+# Sprint 4 : Panel TopBar
 
 ### 🏗️ TODO 1 : Gestion des Fichiers et Persistance
 
