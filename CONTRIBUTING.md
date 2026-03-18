@@ -556,7 +556,7 @@ test/fr/univrennes/istic/l2gen/geometry/
 
 ```java
 import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.Assert.*;
 
 public class CircleTest extends AbstractShapeTest<Circle> {
 

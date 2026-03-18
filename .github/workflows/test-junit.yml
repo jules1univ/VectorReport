@@ -17,27 +17,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21' 
-
-      - name: Compile sources
-        run: |
-          mkdir -p out
-          javac -cp "lib/*" -d out $(find src -name "*.java")
-
-      - name: Compile tests
-        run: |
-          javac \
-            -cp "out:lib/junit-4.13.2.jar:lib/hamcrest-core-1.3.jar" \
-            -d out \
-            $(find test -name "*.java")
+          java-version: '21'
+          cache: 'maven'
 
       - name: Run JUnit tests
-        run: |
-          TEST_CLASSES=$(find out -name "*Test.class" \
-            | sed 's|out/||' \
-            | sed 's|/|.|g' \
-            | sed 's|.class$||')
-
-          java \
-            -cp "out:lib/junit-4.13.2.jar:lib/hamcrest-core-1.3.jar" \
-            org.junit.runner.JUnitCore $TEST_CLASSES
+        run: mvn -B test
