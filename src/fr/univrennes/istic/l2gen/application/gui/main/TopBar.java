@@ -16,11 +16,11 @@ public final class TopBar extends JMenuBar {
         JMenu file = new JMenu("File");
 
         JMenuItem openItem = new JMenuItem("Open");
-        openItem.addActionListener(e -> controller.onLoadResourceRequested(false));
+        openItem.addActionListener(e -> controller.onOpenFileDialog());
         file.add(openItem);
 
         JMenuItem openUrlItem = new JMenuItem("Open URL");
-        openUrlItem.addActionListener(e -> controller.onLoadResourceRequested(true));
+        openUrlItem.addActionListener(e -> controller.onOpenUrlDialog());
         file.add(openUrlItem);
 
         JMenuItem exitItem = new JMenuItem("Exit");
@@ -62,11 +62,11 @@ public final class TopBar extends JMenuBar {
         JMenu help = new JMenu("Help");
 
         JMenuItem documentation = new JMenuItem("Documentation");
-        documentation.addActionListener(e -> controller.openDocumentationDialog());
+        documentation.addActionListener(e -> controller.onOpenDocDialog());
         help.add(documentation);
 
         JMenuItem about = new JMenuItem("About");
-        about.addActionListener(e -> controller.openAboutDialog());
+        about.addActionListener(e -> controller.onOpenAboutDialog());
         help.add(about);
 
         add(file);

@@ -1,14 +1,14 @@
 package fr.univrennes.istic.l2gen.application.gui;
 
 import fr.univrennes.istic.l2gen.application.core.CoreApp;
+import fr.univrennes.istic.l2gen.application.core.config.Config;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
 import java.time.LocalTime;
 
-import javax.swing.*;
-
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import javax.swing.*;
 
 public final class GUIApp extends CoreApp<GUIController> {
 
@@ -22,6 +22,13 @@ public final class GUIApp extends CoreApp<GUIController> {
 
     @Override
     public void start() {
+        if (!Config.getInstance().init()) {
+            JOptionPane.showMessageDialog(null,
+                    "Failed to load configuration.",
+                    "Startup Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         if (!FlatLightLaf.setup()) {
             JOptionPane.showMessageDialog(null,

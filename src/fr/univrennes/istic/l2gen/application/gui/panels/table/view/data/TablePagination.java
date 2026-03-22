@@ -5,9 +5,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import fr.univrennes.istic.l2gen.application.gui.GUIController;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
-
 import java.awt.FlowLayout;
 
 public final class TablePagination extends JPanel {
@@ -15,7 +12,6 @@ public final class TablePagination extends JPanel {
     private static final int[] PAGE_SIZE_OPTIONS = { 500, 1000, 5000, 10000 };
 
     private final TableModel tableModel;
-    private final GUIController controller;
 
     private final JLabel pageInfoLabel;
     private final JButton firstPageButton;
@@ -24,21 +20,20 @@ public final class TablePagination extends JPanel {
     private final JButton lastPageButton;
     private final JComboBox<String> pageSizeComboBox;
 
-    public TablePagination(TableModel tableModel, GUIController controller) {
+    public TablePagination(TableModel tableModel) {
         super(new FlowLayout(FlowLayout.CENTER, 8, 4));
         this.tableModel = tableModel;
-        this.controller = controller;
 
         firstPageButton = new JButton("first");
         firstPageButton.addActionListener(e -> {
             tableModel.goToPage(0);
-            refresh();
+            reload();
         });
 
         previousPageButton = new JButton("previous");
         previousPageButton.addActionListener(e -> {
             tableModel.previousPage();
-            refresh();
+            reload();
         });
 
         pageInfoLabel = new JLabel();
@@ -46,13 +41,13 @@ public final class TablePagination extends JPanel {
         nextPageButton = new JButton("next");
         nextPageButton.addActionListener(e -> {
             tableModel.nextPage();
-            refresh();
+            reload();
         });
 
         lastPageButton = new JButton("last");
         lastPageButton.addActionListener(e -> {
             tableModel.goToPage(tableModel.getTotalPages() - 1);
-            refresh();
+            reload();
         });
 
         String[] pageSizeLabels = new String[PAGE_SIZE_OPTIONS.length];
@@ -65,7 +60,7 @@ public final class TablePagination extends JPanel {
         pageSizeComboBox.addActionListener(e -> {
             int selectedPageSize = PAGE_SIZE_OPTIONS[pageSizeComboBox.getSelectedIndex()];
             tableModel.setPageSize(selectedPageSize);
-            refresh();
+            reload();
         });
         add(pageSizeComboBox);
 
@@ -75,10 +70,10 @@ public final class TablePagination extends JPanel {
         add(nextPageButton);
         add(lastPageButton);
 
-        refresh();
+        reload();
     }
 
-    public void refresh() {
+    public void reload() {
         int currentPage = tableModel.getPageIndex() + 1;
         int totalPages = tableModel.getTotalPages();
 
@@ -88,8 +83,7 @@ public final class TablePagination extends JPanel {
         nextPageButton.setEnabled(currentPage < totalPages);
         lastPageButton.setEnabled(currentPage < totalPages);
 
-        boolean showCombobox = this.controller.getCurrentTable().map(CSVTable::getRowCount)
-                .orElse(0) >= PAGE_SIZE_OPTIONS[0];
+        boolean showCombobox = tableModel.getTotalRowCount() >= PAGE_SIZE_OPTIONS[0];
         pageSizeComboBox.setVisible(showCombobox);
     }
 }

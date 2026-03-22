@@ -1,26 +1,40 @@
 package fr.univrennes.istic.l2gen.application.gui;
 
+import java.awt.Desktop;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import com.formdev.flatlaf.util.SystemFileChooser;
 
 import fr.univrennes.istic.l2gen.application.core.CoreController;
-import fr.univrennes.istic.l2gen.application.core.services.filter.FilterCondition;
-import fr.univrennes.istic.l2gen.application.core.services.stats.CorrelationType;
+import fr.univrennes.istic.l2gen.application.core.config.Config;
+import fr.univrennes.istic.l2gen.application.core.services.FileService;
+import fr.univrennes.istic.l2gen.application.core.services.StatisticService;
+import fr.univrennes.istic.l2gen.application.core.table.DataTable;
+import fr.univrennes.istic.l2gen.application.core.table.DataTableInfo;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVType;
 
 public final class GUIController extends CoreController {
 
     private MainView mainView;
+    private DataTable currentTable;
 
     public GUIController() {
     }
@@ -33,215 +47,227 @@ public final class GUIController extends CoreController {
         return mainView;
     }
 
-    public void onLoadResourceRequested(boolean isUrl) {
-        if (isUrl) {
-            String url = JOptionPane.showInputDialog(mainView, "URL", "Load from url",
-                    JOptionPane.PLAIN_MESSAGE);
-            if (url != null && !url.trim().isEmpty()) {
-                try {
-                    URI uri = URI.create(url);
-
-                    setLoading(true);
-                    setStatus("Loading from URL: " + uri);
-
-                    new SwingWorker<Void, Void>() {
-                        @Override
-                        protected Void doInBackground() throws Exception {
-                            long startTime = System.currentTimeMillis();
-                            int tablesLoaded = getLoader().loadUrl(uri, true).size();
-                            long endTime = System.currentTimeMillis();
-
-                            setStatus(String.format("Loaded %d tables from URL in %.2f seconds", tablesLoaded,
-                                    (endTime - startTime) / 1000.0));
-                            return null;
-                        }
-
-                        @Override
-                        protected void done() {
-                            setLoading(false);
-                            onTableLoad();
-                        }
-
-                    }.execute();
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(mainView, "Failed to load from URL: " + e.getMessage(), "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
-            return;
+    public void setLoading(boolean isLoading) {
+        if (mainView != null) {
+            mainView.getBottomBar().setLoading(isLoading);
         }
-        SystemFileChooser fileChooser = new SystemFileChooser();
-        fileChooser.setMultiSelectionEnabled(true);
-
-        if (fileChooser.showOpenDialog(mainView) != SystemFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        File[] files = fileChooser.getSelectedFiles();
-        setLoading(true);
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                int totalImported = 0;
-                long startGlobalTime = System.currentTimeMillis();
-                for (File file : files) {
-                    long startTime = System.currentTimeMillis();
-                    if (file.isDirectory()) {
-                        setStatus("Loading folder: " + file.getName());
-                        totalImported += getLoader().loadFolder(file, true).size();
-                    } else {
-                        setStatus("Loading file: " + file.getName());
-                        totalImported += getLoader().loadFile(file, true).size();
-                    }
-                    long endTime = System.currentTimeMillis();
-                    setStatus(
-                            String.format("Loaded %s in %.2f seconds", file.getName(), (endTime - startTime) / 1000.0));
-                }
-                long endGlobalTime = System.currentTimeMillis();
-                setStatus(String.format("Loaded %d tables in %.2f seconds", totalImported,
-                        (endGlobalTime - startGlobalTime) / 1000.0));
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                setLoading(false);
-                onTableLoad();
-            }
-
-        }.execute();
     }
 
-    public void openDocumentationDialog() {
-
+    public void setStatus(String status) {
+        if (mainView != null) {
+            mainView.getBottomBar().setStatus(status);
+        }
     }
 
-    public void openAboutDialog() {
+    public void onOpenParquetTable(File file) {
+        try {
+            DataTable table = DataTable.of(file);
+            currentTable = table;
+
+            SwingUtilities.invokeLater(() -> {
+                mainView.getTablePanel().getTable().open(table);
+                mainView.getBottomBar().setTableInfo(
+                        table.getInfo().getAlias(),
+                        (int) table.getInfo().getRowCount(),
+                        (int) table.getInfo().getColumnCount());
+                setStatus("Loaded " + table.getInfo().getAlias());
+            });
+        } catch (IOException e) {
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(mainView,
+                    "Failed to open Parquet file.\n" + e.getMessage(),
+                    "Open Error",
+                    JOptionPane.ERROR_MESSAGE));
+        }
+    }
+
+    public void onCloseTable() {
+        if (currentTable != null) {
+            currentTable.close();
+            currentTable = null;
+        }
+
+        if (mainView != null) {
+            mainView.getTablePanel().close();
+            mainView.getBottomBar().setTableInfo("", 0, 0);
+            mainView.getBottomBar().clearColumnStats();
+            setStatus("Ready");
+        }
+    }
+
+    public void onColumnSelected(int columnIndex) {
+        if (mainView != null) {
+            mainView.getBottomBar().clearColumnStats();
+
+            CompletableFuture.runAsync(() -> {
+                Optional<String> min = StatisticService.computeMin(currentTable, columnIndex);
+                Optional<String> max = StatisticService.computeMax(currentTable, columnIndex);
+                Optional<String> avg = StatisticService.computeAvg(currentTable, columnIndex);
+                Optional<String> sum = StatisticService.computeSum(currentTable, columnIndex);
+
+                SwingUtilities.invokeLater(() -> mainView.getBottomBar().setColumnStats(min, max, avg, sum));
+            });
+        }
+    }
+
+    public void onColumnSortRequested(int columnIndex, boolean ascending) {
 
     }
 
     public void onFilterByCategoryRequested(int columnIndex, boolean percentage) {
-        if (getCurrentTable().isEmpty()) {
-            return;
-        }
-        CSVTable table = getCurrentTable().get();
-
-        setLoading(true);
-
-        new SwingWorker<CSVTable, Void>() {
-            @Override
-            protected CSVTable doInBackground() throws Exception {
-                return getFilter().filterByCategory(table, columnIndex, percentage);
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    setCurrentTable(get());
-                } catch (InterruptedException | ExecutionException exception) {
-                    Thread.currentThread().interrupt();
-                } finally {
-                    setLoading(false);
-                }
-            }
-        }.execute();
-    }
-
-    public void onCorrelationRequested(int columnIndex, int targetColIndex, CorrelationType type) {
-        if (getCurrentTable().isEmpty()) {
-            return;
-        }
-        CSVTable table = getCurrentTable().get();
-        setLoading(true);
-        new SwingWorker<Double, Void>() {
-            @Override
-            protected Double doInBackground() throws Exception {
-                return getStats().getCorrelation(table, columnIndex, targetColIndex, type);
-            }
-
-            @Override
-            protected void done() {
-                setLoading(false);
-
-                try {
-                    double correlation = get();
-                    String message = String.format("Between %s and %s: %.4f",
-                            table.getColumnName(columnIndex).orElse("(unknown)").toLowerCase(),
-                            table.getColumnName(targetColIndex).orElse("(unknown)").toLowerCase(),
-                            correlation);
-
-                    JOptionPane.showMessageDialog(mainView, message,
-                            String.format("Correlation (%s)", type.name().toLowerCase()),
-                            JOptionPane.INFORMATION_MESSAGE);
-                } catch (InterruptedException | ExecutionException exception) {
-                    Thread.currentThread().interrupt();
-                } finally {
-                }
-            }
-        }.execute();
-    }
-
-    public void onValueDistributionRequested(int columnIndex) {
 
     }
 
     public void onFilterTopNRequested(int columnIndex, int n, boolean top) {
+
     }
 
-    public void onFilterByRangeRequested(int columnIndex, double min, double max) {
+    public void onFilterByRangeRequested(int columnIndex, double minValue, double maxValue) {
+
     }
 
     public void onFilterEmptyRequested(int columnIndex, boolean showEmpty) {
-    }
 
-    public void onTableSaveRequested() {
-    }
-
-    public void onFilterRequested(List<FilterCondition> conditions) {
     }
 
     public void onFilterCleared(int columnIndex) {
 
     }
 
-    public void onColumnRemoveRequested(int columnIndex) {
-        if (getCurrentTable().isEmpty()) {
-            return;
-        }
-        CSVTable table = getCurrentTable().get();
-        CSVTable copy = new CSVTable(table);
-        copy.removeColumn(columnIndex);
-        setCurrentTable(copy);
+    public Optional<DataTable> getTable() {
+        return Optional.ofNullable(currentTable);
     }
 
-    public void onColumnTypeChangeRequested(int columnIndex, CSVType newType) {
-        if (getCurrentTable().isEmpty()) {
-            return;
-        }
-        CSVTable table = getCurrentTable().get();
-        table.setColumnType(columnIndex, newType);
+    public void onOpenFilterDialog() {
+        JOptionPane.showMessageDialog(mainView, "Filters are not implemented yet.", "Filters",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void onColumnSortRequested(int columnIndex, boolean ascending) {
-        if (getCurrentTable().isEmpty()) {
+    public void onOpenFileDialog() {
+        SystemFileChooser chooser = new SystemFileChooser();
+        chooser.setMultiSelectionEnabled(true);
+        chooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
+
+        if (chooser.showOpenDialog(this.getMainView()) != SystemFileChooser.APPROVE_OPTION) {
             return;
         }
-        CSVTable table = getCurrentTable().get();
+
+        File[] selectedFiles = chooser.getSelectedFiles();
+
+        if (selectedFiles.length == 1 && FileService.isParquetFile(selectedFiles[0])) {
+            getMainView().getTablePanel().open(selectedFiles[0]);
+            return;
+        }
+
+        Map<File, Boolean> useCachedDecisions = new HashMap<>();
+        for (File file : selectedFiles) {
+            if (FileService.isAlreadyProcessed(file)) {
+                int option = JOptionPane.showOptionDialog(
+                        mainView,
+                        "A cached Parquet file already exists for " + file.getName() + ".\n"
+                                + "Do you want to use the cached version or reprocess the original file?",
+                        "File Already Processed",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        new String[] { "Use Cached", "Reprocess" },
+                        "Use Cached");
+                useCachedDecisions.put(file, option != 1);
+            }
+        }
 
         setLoading(true);
-        new SwingWorker<CSVTable, Void>() {
+        setStatus("Processing " + selectedFiles.length + " files...");
+
+        new SwingWorker<List<DataTableInfo>, Void>() {
             @Override
-            protected CSVTable doInBackground() {
-                return getFilter().sortByColumn(table, columnIndex, ascending);
+            protected List<DataTableInfo> doInBackground() throws Exception {
+                long startTime = System.currentTimeMillis();
+                List<DataTableInfo> processedFiles = new ArrayList<>();
+
+                for (File file : selectedFiles) {
+                    boolean useCached = useCachedDecisions.getOrDefault(file, false);
+
+                    if (useCached) {
+                        File parquetFile = FileService.getProcessedFile(file);
+                        DataTableInfo info = DataTableInfo.of(parquetFile);
+                        if (info != null) {
+                            processedFiles.add(info);
+                            continue;
+                        }
+                    } else if (FileService.isAlreadyProcessed(file)) {
+                        FileService.getProcessedFile(file).delete();
+                    }
+
+                    processedFiles.addAll(FileService.process(file));
+                }
+
+                long endTime = System.currentTimeMillis();
+                setStatus("Processed " + processedFiles.size() + "/" + selectedFiles.length
+                        + " files in " + (endTime - startTime) + " ms");
+                Config.getInstance().addRecentFiles(processedFiles);
+                return processedFiles;
             }
 
             @Override
             protected void done() {
                 try {
-                    setCurrentTable(get());
-                } catch (InterruptedException | ExecutionException exception) {
-                    Thread.currentThread().interrupt();
+                    List<DataTableInfo> processedFiles = get();
+                    SwingUtilities.invokeLater(() -> {
+                        if (processedFiles.size() == 1) {
+                            mainView.getTablePanel().open(processedFiles.get(0).getSource());
+                        } else {
+                            getMainView().getTablePanel().refresh();
+                        }
+                    });
+                } catch (InterruptedException | ExecutionException e) {
+                    Throwable rootCause = e.getCause() != null ? e.getCause() : e;
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(
+                                mainView,
+                                rootCause.getClass().getSimpleName() + ": " + rootCause.getMessage(),
+                                "Processing Error",
+                                JOptionPane.ERROR_MESSAGE);
+                        getMainView().getTablePanel().refresh();
+                    });
+                }
+                setLoading(false);
+            }
+        }.execute();
+    }
+
+    public void onOpenUrlDialog() {
+        String input = JOptionPane.showInputDialog(mainView, "Parquet URL:");
+        if (input == null || input.isBlank()) {
+            return;
+        }
+
+        URI uri;
+        try {
+            uri = URI.create(input.trim());
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(mainView, "Invalid URL.", "Invalid URL",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        setLoading(true);
+        new SwingWorker<File, Void>() {
+            @Override
+            protected File doInBackground() throws Exception {
+                return downloadParquet(uri.toURL());
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    File file = get();
+                    if (!mainView.getTablePanel().open(file)) {
+                        JOptionPane.showMessageDialog(mainView, "Downloaded file is not a valid Parquet file.",
+                                "Invalid File", JOptionPane.WARNING_MESSAGE);
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(mainView, "Failed to download Parquet file.\n" + ex.getMessage(),
+                            "Download Error", JOptionPane.ERROR_MESSAGE);
                 } finally {
                     setLoading(false);
                 }
@@ -249,84 +275,58 @@ public final class GUIController extends CoreController {
         }.execute();
     }
 
-    public void onColumnSelected(int columnIndex) {
-        if (getCurrentTable().isEmpty()) {
-            return;
-        }
-        CSVTable table = getCurrentTable().get();
-        setLoading(true);
-        new SwingWorker<Void, Void>() {
-            private Optional<String> min;
-            private Optional<String> max;
-            private Optional<String> avg;
-            private Optional<String> sum;
-
-            @Override
-            protected Void doInBackground() {
-                min = getStats().getColumnMin(table, columnIndex);
-                max = getStats().getColumnMax(table, columnIndex);
-                avg = getStats().getColumnAvg(table, columnIndex);
-                sum = getStats().getColumnSum(table, columnIndex);
-                return null;
+    public void onOpenDocDialog() {
+        try {
+            if (!Desktop.isDesktopSupported()) {
+                JOptionPane.showMessageDialog(mainView, "Documentation is not available on this system.",
+                        "Documentation", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                    mainView.getBottomBar().setColumnStats(min, max, avg, sum);
-                } catch (InterruptedException | ExecutionException exception) {
-                    Thread.currentThread().interrupt();
-                } finally {
-                    setLoading(false);
-                }
+            File docs = new File("docs/DOCUMENTATION.md");
+            if (!docs.exists()) {
+                JOptionPane.showMessageDialog(mainView, "Documentation file not found.", "Documentation",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
-        }.execute();
-    }
-
-    public void onTableLoad() {
-        List<String> names = getLoader().getTablesName();
-        if (names.size() == 0) {
-            JOptionPane.showMessageDialog(mainView, "No tables loaded.", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
+            Desktop.getDesktop().open(docs);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(mainView, "Unable to open documentation.", "Documentation",
+                    JOptionPane.ERROR_MESSAGE);
         }
-        if (names.size() == 1) {
-            CSVTable table = getLoader().getTable(names.get(0));
-            table.setName(names.get(0));
-            setMainTable(table);
+    }
 
-            setCurrentTable(table);
-            return;
+    private File downloadParquet(URL url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setConnectTimeout(10_000);
+        connection.setReadTimeout(30_000);
+        connection.setInstanceFollowRedirects(true);
+
+        File dir = Config.getInstance().getAppDataDirectory();
+        File tempFile = Files.createTempFile(dir.toPath(), "parquet-", ".parquet").toFile();
+        tempFile.deleteOnExit();
+
+        try (InputStream input = connection.getInputStream();
+                FileOutputStream output = new FileOutputStream(tempFile)) {
+            input.transferTo(output);
         }
-
-        mainView.getTablePanel().refresh();
+        return tempFile;
     }
 
-    public void onTableSelected(String tableName) {
-        CSVTable table = getLoader().getTable(tableName);
-        setCurrentTable(table);
-    }
+    public void onOpenAboutDialog() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("VectorReport - Generate SVG charts from CSV files.\n");
+        sb.append("Version: 1.0.0\n");
+        sb.append("Developed by:\n");
+        sb.append(" - Jules Garcia (@jules1univ)\n");
+        sb.append(" - Paul Gallon (@MarcoPaulot)\n");
+        sb.append(" - Elouan Barbier (@Marsu2)\n");
+        sb.append(" - Noé Berthelier (@nberthelier)\n");
+        sb.append(" - Briac Boitel (@bboitel)\n");
+        sb.append(" - Kerem Eylem (@Keylem)\n");
+        sb.append(" - Basile Guemene (@Astala-Boom)\n");
+        sb.append("\n");
+        sb.append("This software is licensed under the MIT License.\n");
 
-    public void onTableClosed() {
-        mainView.getTablePanel().closeTable();
-        mainView.getTablePanel().refresh();
-    }
-
-    public void setStatus(String status) {
-        mainView.getBottomBar().setStatus(status);
-    }
-
-    public void setLoading(boolean isLoading) {
-        mainView.getBottomBar().setLoading(isLoading);
-    }
-
-    @Override
-    public void setCurrentTable(CSVTable table) {
-        super.setCurrentTable(table);
-        mainView.getTablePanel().load(table);
-
-        String tableName = getLoader().getName(table);
-        mainView.getBottomBar().setTableInfo(tableName, table.getRowCount(), table.getColumnCount());
-        mainView.getBottomBar().clearColumnStats();
+        JOptionPane.showMessageDialog(mainView, sb.toString(), "About VectorReport", JOptionPane.INFORMATION_MESSAGE);
     }
 }

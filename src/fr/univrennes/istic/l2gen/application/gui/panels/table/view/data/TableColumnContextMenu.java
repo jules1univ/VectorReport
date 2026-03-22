@@ -5,9 +5,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
-import fr.univrennes.istic.l2gen.application.core.services.stats.CorrelationType;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVType;
 
 public final class TableColumnContextMenu extends JPopupMenu {
 
@@ -25,9 +23,7 @@ public final class TableColumnContextMenu extends JPopupMenu {
         addSeparator();
         add(buildFilterMenu());
         addSeparator();
-        add(buildCorrelateMenu());
-        addSeparator();
-        add(buildTypeMenu());
+        // add(buildCorrelateMenu());
 
         JMenuItem renameColumnItem = new JMenuItem("Rename column");
         renameColumnItem.addActionListener(e -> {
@@ -41,9 +37,6 @@ public final class TableColumnContextMenu extends JPopupMenu {
 
         JMenuItem hideColumnItem = new JMenuItem("Hide column");
         hideColumnItem.addActionListener(e -> tableView.hideColumn(columnIndex));
-
-        JMenuItem removeColumnItem = new JMenuItem("Remove column");
-        removeColumnItem.addActionListener(e -> controller.onColumnRemoveRequested(columnIndex));
 
         add(hideColumnItem);
     }
@@ -124,7 +117,7 @@ public final class TableColumnContextMenu extends JPopupMenu {
         JMenuItem filterNonEmptyItem = new JMenuItem("Show non-empty values only");
         filterNonEmptyItem.addActionListener(e -> controller.onFilterEmptyRequested(columnIndex, false));
 
-        JMenuItem clearFilterItem = new JMenuItem("Clear filter");
+        JMenuItem clearFilterItem = new JMenuItem("Clear filters");
         clearFilterItem.addActionListener(e -> controller.onFilterCleared(columnIndex));
 
         filterMenu.add(filterByCategoryMenu);
@@ -139,57 +132,4 @@ public final class TableColumnContextMenu extends JPopupMenu {
         return filterMenu;
     }
 
-    private JMenu buildCorrelateMenu() {
-        JMenu correlateMenu = new JMenu("Correlate");
-
-        JMenu pearsonMenu = new JMenu("Pearson correlation");
-        JMenu spearmanMenu = new JMenu("Spearman correlation");
-        JMenu kendallMenu = new JMenu("Kendall's tau correlation");
-
-        for (int i = 0; i < tableView.getTable().getColumnCount(); i++) {
-            if (i == columnIndex) {
-                continue;
-            }
-            int targetColumnIndex = i;
-            String columnName = tableView.getTable().getColumnName(i);
-
-            JMenuItem pearsonItem = new JMenuItem(columnName);
-            pearsonItem.addActionListener(
-                    e -> controller.onCorrelationRequested(columnIndex, targetColumnIndex, CorrelationType.PEARSON));
-            pearsonMenu.add(pearsonItem);
-
-            JMenuItem spearmanItem = new JMenuItem(columnName);
-            spearmanItem.addActionListener(
-                    e -> controller.onCorrelationRequested(columnIndex, targetColumnIndex, CorrelationType.SPEARMAN));
-            spearmanMenu.add(spearmanItem);
-
-            JMenuItem kendallItem = new JMenuItem(columnName);
-            kendallItem.addActionListener(
-                    e -> controller.onCorrelationRequested(columnIndex, targetColumnIndex, CorrelationType.KENDALL));
-            kendallMenu.add(kendallItem);
-        }
-
-        JMenuItem valueDistributionItem = new JMenuItem("Value distribution (histogram)");
-        valueDistributionItem.addActionListener(e -> controller.onValueDistributionRequested(columnIndex));
-
-        correlateMenu.add(pearsonMenu);
-        correlateMenu.add(spearmanMenu);
-        correlateMenu.add(kendallMenu);
-        correlateMenu.add(valueDistributionItem);
-        correlateMenu.addSeparator();
-
-        // Gain d'information
-        // Hentropy
-        return correlateMenu;
-    }
-
-    private JMenu buildTypeMenu() {
-        JMenu typeMenu = new JMenu("Change type");
-        for (CSVType type : CSVType.values()) {
-            JMenuItem typeItem = new JMenuItem(type.name());
-            typeItem.addActionListener(e -> controller.onColumnTypeChangeRequested(columnIndex, type));
-            typeMenu.add(typeItem);
-        }
-        return typeMenu;
-    }
 }

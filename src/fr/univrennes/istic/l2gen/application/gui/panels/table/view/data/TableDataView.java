@@ -1,9 +1,8 @@
 package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
+import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
 import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
-import fr.univrennes.istic.l2gen.application.gui.panels.table.filter.FilterDialog;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -14,7 +13,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -54,17 +52,22 @@ public final class TableDataView extends JPanel {
             }
         });
 
-        paginationBar = new TablePagination(tableModel, controller);
+        paginationBar = new TablePagination(tableModel);
 
-        add(new TableToolBar(controller, tablePanel, tablePanel::closeTable), BorderLayout.NORTH);
+        add(new TableToolBar(controller, tablePanel), BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(paginationBar, BorderLayout.SOUTH);
     }
 
-    public void load(CSVTable data) {
-        tableModel.load(data);
-        paginationBar.refresh();
+    public void open(DataTable table) {
+        tableModel.open(table);
+        paginationBar.reload();
         adjustColumnWidths();
+    }
+
+    public void close() {
+        tableModel.close();
+        paginationBar.reload();
     }
 
     public JTable getTable() {
@@ -92,34 +95,13 @@ public final class TableDataView extends JPanel {
         table.getTableHeader().repaint();
     }
 
-    public void showAllColumns(int totalColumnCount) {
+    public void showAllColumns() {
         TableColumnModel columnModel = table.getColumnModel();
-        for (int modelIndex = 0; modelIndex < totalColumnCount; modelIndex++) {
-            boolean alreadyVisible = false;
-            for (int viewIndex = 0; viewIndex < columnModel.getColumnCount(); viewIndex++) {
-                if (columnModel.getColumn(viewIndex).getModelIndex() == modelIndex) {
-                    alreadyVisible = true;
-                    break;
-                }
-            }
-            if (!alreadyVisible) {
-                TableColumn column = new TableColumn(modelIndex);
-                column.setHeaderValue(tableModel.getColumnName(modelIndex));
-                table.addColumn(column);
-            }
+        while (columnModel.getColumnCount() > 0) {
+            columnModel.removeColumn(columnModel.getColumn(0));
         }
+        table.createDefaultColumnsFromModel();
         adjustColumnWidths();
-    }
-
-    public void openAdvancedFilterDialog(GUIController controller) {
-        Window parentWindow = SwingUtilities.getWindowAncestor(this);
-        int columnCount = table.getColumnCount();
-        String[] columnNames = new String[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            columnNames[i] = table.getColumnName(i);
-        }
-        FilterDialog filterDialog = new FilterDialog(parentWindow, columnNames, controller);
-        filterDialog.setVisible(true);
     }
 
     public void selectColumn(int columnIndex) {

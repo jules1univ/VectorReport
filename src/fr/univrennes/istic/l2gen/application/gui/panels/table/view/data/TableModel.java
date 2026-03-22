@@ -1,6 +1,6 @@
 package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
-import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
+import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -10,33 +10,39 @@ public final class TableModel extends AbstractTableModel {
 
     private final TableDataView tableView;
 
-    private CSVTable source;
-    private String[] columnNames;
-
-    private int pageIndex;
+    private DataTable table;
     private int pageSize;
-    private int columnCount;
+    private int pageIndex;
 
     public TableModel(TableDataView tableView) {
+        this.tableView = tableView;
         this.pageSize = DEFAULT_PAGE_SIZE;
         this.pageIndex = 0;
-        this.tableView = tableView;
     }
 
-    public void load(CSVTable data) {
-        this.source = data;
+    public void open(DataTable dataTable) {
+        this.table = dataTable;
         this.pageIndex = 0;
-        this.columnCount = data.getColumnCount();
-        this.columnNames = buildColumnNames(data);
+        prefetchCurrentPage();
+        fireTableStructureChanged();
+    }
+
+    public void close() {
+        this.table = null;
+        this.pageIndex = 0;
         fireTableStructureChanged();
     }
 
     public void goToPage(int newPageIndex) {
+        if (table == null) {
+            return;
+        }
         int totalPages = getTotalPages();
         if (newPageIndex < 0 || newPageIndex >= totalPages) {
             return;
         }
         this.pageIndex = newPageIndex;
+        prefetchCurrentPage();
         fireTableDataChanged();
         tableView.adjustColumnWidths();
     }
@@ -49,29 +55,36 @@ public final class TableModel extends AbstractTableModel {
         goToPage(pageIndex - 1);
     }
 
-    int getPageIndex() {
+    public int getPageIndex() {
         return pageIndex;
     }
 
-    int getTotalPages() {
-        if (source == null || source.getRowCount() == 0) {
-            return 1;
+    public int getTotalPages() {
+        if (table == null) {
+            return 0;
         }
-        return (int) Math.ceil((double) source.getRowCount() / pageSize);
+        return (int) Math.ceil((double) table.getInfo().getRowCount() / pageSize);
     }
 
-    int getPageSize() {
+    public int getPageSize() {
         return pageSize;
     }
 
     public void setPageSize(int newPageSize) {
+        if (newPageSize <= 0) {
+            return;
+        }
         this.pageSize = newPageSize;
         this.pageIndex = 0;
+        prefetchCurrentPage();
         fireTableDataChanged();
     }
 
-    int getTotalRowCount() {
-        return source == null ? 0 : source.getRowCount();
+    public int getTotalRowCount() {
+        if (table == null) {
+            return 0;
+        }
+        return (int) table.getInfo().getRowCount();
     }
 
     private int getPageStartRow() {
@@ -79,54 +92,49 @@ public final class TableModel extends AbstractTableModel {
     }
 
     private int getPageEndRow() {
-        if (source == null) {
+        if (table == null) {
             return 0;
         }
-        return Math.min(getPageStartRow() + pageSize, source.getRowCount());
+        return Math.min(getPageStartRow() + pageSize, (int) table.getInfo().getRowCount());
     }
 
-    private static String[] buildColumnNames(CSVTable data) {
-        int colCount = data.getColumnCount();
-        String[] names = new String[colCount];
-        if (data.getHeader().isPresent()) {
-            String[] headerCells = data.getRawHeader();
-            for (int i = 0; i < colCount; i++) {
-                String cell = (i < headerCells.length) ? headerCells[i] : null;
-                names[i] = (cell == null) ? "Column " + (i + 1) : cell;
-            }
-        } else {
-            for (int i = 0; i < colCount; i++) {
-                names[i] = "Column " + (i + 1);
-            }
+    private void prefetchCurrentPage() {
+        if (table == null) {
+            return;
         }
-        return names;
+        table.prefetch(getPageStartRow(), getPageEndRow());
     }
 
     @Override
     public int getRowCount() {
+        if (table == null) {
+            return 0;
+        }
         return getPageEndRow() - getPageStartRow();
     }
 
     @Override
     public int getColumnCount() {
-        return columnCount;
+        if (table == null) {
+            return 0;
+        }
+        return (int) table.getInfo().getColumnCount();
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-        if (columnNames == null || columnIndex >= columnNames.length) {
-            return "Column " + (columnIndex + 1);
+        if (table == null) {
+            return "";
         }
-        return columnNames[columnIndex];
+        return table.getColumnName(columnIndex);
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (source == null) {
+        if (table == null) {
             return null;
         }
-        int absoluteRowIndex = getPageStartRow() + rowIndex;
-        return source.getRawCell(absoluteRowIndex, columnIndex);
+        return table.getValueAt(getPageStartRow() + rowIndex, columnIndex);
     }
 
     @Override

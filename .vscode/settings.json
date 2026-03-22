@@ -5,22 +5,26 @@
   "[xml]": {
     "editor.defaultFormatter": "redhat.vscode-xml"
   },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
   "[java]": {
     "editor.defaultFormatter": "redhat.java",
     "editor.tabSize": 4
   },
+  "umlGenerator.outputDirectory": "./uml",
+  "files.watcherExclude": {
+    "**/target": true,
+    "**/.mvn": true,
+  },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "redhat.java",
   "editor.tabSize": 4,
-  "java.project.referencedLibraries": ["lib/**/*.jar"],
-  "java.project.sourcePaths": ["src", "test"],
+  "java.project.sourcePaths": [
+    "src",
+    "test"
+  ],
   "java.compile.nullAnalysis.mode": "automatic",
-  "umlGenerator.outputDirectory": "./uml",
-  "[html]": {
-    "editor.defaultFormatter": "vscode.html-language-features"
-  },
   "java.debug.settings.onBuildFailureProceed": true,
-  "files.watcherExclude": {
-    "**/target": true
-  }
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

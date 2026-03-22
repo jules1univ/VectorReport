@@ -1,7 +1,9 @@
 package fr.univrennes.istic.l2gen.application.gui.panels.table.view.list;
 
+import fr.univrennes.istic.l2gen.application.core.config.Config;
+import fr.univrennes.istic.l2gen.application.core.table.DataTableInfo;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
-import fr.univrennes.istic.l2gen.io.csv.model.CSVTable;
+import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -11,15 +13,15 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 
 public final class TableListView extends JPanel {
 
     private final DefaultTableModel listModel;
 
-    public TableListView(GUIController controller) {
+    public TableListView(TablePanel panel, GUIController controller) {
         super(new BorderLayout());
-
-        listModel = new DefaultTableModel(new String[] { "Name", "Rows", "Columns" }, 0) {
+        this.listModel = new DefaultTableModel(new String[] { "Path", "Alias", "Rows", "Columns", "Size" }, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
                 return false;
@@ -36,8 +38,8 @@ public final class TableListView extends JPanel {
                 if (e.getClickCount() == 2) {
                     int selectedRow = tableList.getSelectedRow();
                     if (selectedRow != -1) {
-                        String tableName = (String) listModel.getValueAt(selectedRow, 0);
-                        controller.onTableSelected(tableName);
+                        File path = (File) listModel.getValueAt(selectedRow, 0);
+                        panel.open(path);
                     }
                 }
             }
@@ -46,11 +48,16 @@ public final class TableListView extends JPanel {
         add(new JScrollPane(tableList), BorderLayout.CENTER);
     }
 
-    public void refresh(GUIController controller) {
+    public void refresh() {
         listModel.setRowCount(0);
-        for (String tableName : controller.getLoader().getTablesName()) {
-            CSVTable csvTable = controller.getLoader().getTable(tableName);
-            listModel.addRow(new Object[] { tableName, csvTable.getRowCount(), csvTable.getColumnCount() });
+        for (DataTableInfo info : Config.getInstance().getRecentTables()) {
+            listModel.addRow(new Object[] {
+                    info.getSource(),
+                    info.getAlias(),
+                    info.getRowCount(),
+                    info.getColumnCount(),
+                    info.getSize()
+            });
         }
     }
 
