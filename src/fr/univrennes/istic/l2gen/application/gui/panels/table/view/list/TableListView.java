@@ -1,7 +1,7 @@
 package fr.univrennes.istic.l2gen.application.gui.panels.table.view.list;
 
 import fr.univrennes.istic.l2gen.application.core.config.Config;
-import fr.univrennes.istic.l2gen.application.core.table.DataTableInfo;
+import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
 import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
 
@@ -50,15 +50,25 @@ public final class TableListView extends JPanel {
 
     public void refresh() {
         listModel.setRowCount(0);
-        for (DataTableInfo info : Config.getInstance().getRecentTables()) {
+        for (DataTable table : Config.getInstance().getRecentTables()) {
             listModel.addRow(new Object[] {
-                    info.getSource(),
-                    info.getAlias(),
-                    info.getRowCount(),
-                    info.getColumnCount(),
-                    info.getSize()
+                    table.getTablePath(),
+                    table.getAlias(),
+                    table.getRowCount(),
+                    table.getColumnCount(),
+                    formatSize(table.getTablePath().length())
             });
         }
+    }
+
+    private String formatSize(long size) {
+        if (size < 1024) {
+            return size + " B";
+        }
+
+        int exp = (int) (Math.log(size) / Math.log(1024));
+        char pre = "KMGTPE".charAt(exp - 1);
+        return String.format("%.1f %sB", size / Math.pow(1024, exp), pre);
     }
 
     public boolean isEmpty() {

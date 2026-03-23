@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,27 +16,69 @@ import java.util.concurrent.Executors;
 import org.duckdb.DuckDBConnection;
 
 public final class DataTable {
+    private static final double NUMERIC_COLUMN_THRESHOLD = 0.5;
 
     private static final int BLOCK_SIZE = 10_000;
     private static final int MAX_CACHED_BLOCKS = 8;
-
-    private final DataTableInfo info;
-    private final String absoluteParquetPath;
-    private final List<String> columnNames;
-    private final int blockCount;
 
     private final LinkedHashMap<Integer, Object[][]> blockCache;
     private final ExecutorService prefetchExecutor;
 
     private DuckDBConnection sharedConnection;
 
-    @SuppressWarnings("serial")
-    private DataTable(DataTableInfo info, List<String> columnNames) throws IOException {
-        this.info = info;
-        this.columnNames = columnNames;
-        this.absoluteParquetPath = info.getSource().getAbsolutePath().replace("\\", "/");
-        this.blockCount = (int) Math.ceil((double) info.getRowCount() / BLOCK_SIZE);
+    private final String tableName;
+    private final File tablePath;
+    private String alias;
 
+    private final List<String> columnNames;
+
+    private final long rowCount;
+    private final long columnCount;
+    private final int blockCount;
+
+    public static DataTable of(File file) throws IOException {
+        if (!file.exists() || !file.isFile() || !file.canRead()) {
+            throw new IOException("File not found or not readable: " + file.getAbsolutePath());
+        }
+
+        String absolutePath = file.getAbsolutePath().replace("\\", "/");
+        List<String> columnNames = new ArrayList<>();
+
+        try (DuckDBConnection connection = (DuckDBConnection) DriverManager.getConnection("jdbc:duckdb:")) {
+            try (Statement statement = connection.createStatement()) {
+
+                ResultSet rowCountResult = statement.executeQuery(
+                        String.format("SELECT COUNT(*) FROM '%s'", absolutePath));
+                rowCountResult.next();
+                long rowCount = rowCountResult.getLong(1);
+
+                ResultSet describeResult = statement.executeQuery(
+                        String.format("DESCRIBE SELECT * FROM '%s'", absolutePath));
+                long columnCount = 0;
+                while (describeResult.next()) {
+                    columnCount++;
+                    columnNames.add(describeResult.getString("column_name"));
+                }
+
+                String alias = file.getName().replaceFirst("[.][^.]+$", "");
+                return new DataTable(file, alias, columnNames, rowCount, columnCount);
+            }
+        } catch (Exception e) {
+            throw new IOException("Failed to read metadata from: " + file.getAbsolutePath(), e);
+        }
+    }
+
+    public DataTable(File file, String alias, List<String> columnNames, long rowCount, long columnCount)
+            throws IOException {
+        this.tablePath = file;
+        this.tableName = file.getAbsolutePath().replace("\\", "/");
+        this.alias = alias;
+
+        this.columnNames = columnNames;
+        this.columnCount = columnCount;
+
+        this.rowCount = rowCount;
+        this.blockCount = (int) Math.ceil((double) rowCount / BLOCK_SIZE);
         this.blockCache = new LinkedHashMap<>(MAX_CACHED_BLOCKS, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<Integer, Object[][]> eldest) {
@@ -56,36 +99,67 @@ public final class DataTable {
         }
     }
 
-    public static DataTable of(File file) throws IOException {
-        if (!file.exists() || !file.isFile() || !file.canRead()) {
-            throw new IOException("File not found or not readable: " + file.getAbsolutePath());
-        }
+    public File getTablePath() {
+        return tablePath;
+    }
 
-        DataTableInfo tableInfo = DataTableInfo.of(file);
-        if (tableInfo == null) {
-            throw new IOException("Failed to read metadata from: " + file.getAbsolutePath());
-        }
+    public String getTableName() {
+        return tableName;
+    }
 
-        String absolutePath = file.getAbsolutePath().replace("\\", "/");
-        List<String> columnNames = new ArrayList<>();
+    public String getTableColumnName(int columnIndex) {
+        if (columnIndex < 0 || columnIndex >= columnNames.size()) {
+            return "";
+        }
+        return "\"" + getRawColumnName(columnIndex).replace("\"", "\"\"") + "\"";
+    }
+
+    public String getRawColumnName(int columnIndex) {
+        if (columnIndex < 0 || columnIndex >= columnNames.size()) {
+            return "";
+        }
+        return columnNames.get(columnIndex);
+    }
+
+    public boolean isNumericColumn(int columnIndex) {
+        String query = String.format(
+                "SELECT "
+                        + "COUNT(*) FILTER (WHERE TRY_CAST(REPLACE(%s, ',', '.') AS DOUBLE) IS NOT NULL) AS numeric_count, "
+                        + "COUNT(%s) AS non_null_count "
+                        + "FROM '%s'",
+                this.getTableColumnName(columnIndex), this.getTableColumnName(columnIndex), this.getTableName());
 
         try (DuckDBConnection connection = (DuckDBConnection) DriverManager.getConnection("jdbc:duckdb:")) {
             try (var statement = connection.createStatement()) {
-                ResultSet describeResult = statement.executeQuery(
-                        String.format("DESCRIBE SELECT * FROM '%s'", absolutePath));
-                while (describeResult.next()) {
-                    columnNames.add(describeResult.getString("column_name"));
+                ResultSet resultSet = statement.executeQuery(query);
+                if (resultSet.next()) {
+                    long numericCount = resultSet.getLong("numeric_count");
+                    long nonNullCount = resultSet.getLong("non_null_count");
+                    if (nonNullCount == 0) {
+                        return false;
+                    }
+                    return (double) numericCount / nonNullCount >= NUMERIC_COLUMN_THRESHOLD;
                 }
             }
-        } catch (Exception e) {
-            throw new IOException("Failed to read column names from: " + file.getAbsolutePath(), e);
+        } catch (Exception ignored) {
         }
-
-        return new DataTable(tableInfo, columnNames);
+        return false;
     }
 
-    public DataTableInfo getInfo() {
-        return info;
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    public long getRowCount() {
+        return rowCount;
+    }
+
+    public long getColumnCount() {
+        return columnCount;
     }
 
     public int getBlockCount() {
@@ -98,19 +172,12 @@ public final class DataTable {
 
     public long getBlockRowCount(int blockIndex) {
         long start = getBlockStartRow(blockIndex);
-        long remaining = info.getRowCount() - start;
+        long remaining = getRowCount() - start;
         return Math.min(remaining, BLOCK_SIZE);
     }
 
-    public String getColumnName(int columnIndex) {
-        if (columnIndex < 0 || columnIndex >= columnNames.size()) {
-            return "";
-        }
-        return columnNames.get(columnIndex);
-    }
-
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (rowIndex < 0 || rowIndex >= info.getRowCount()) {
+        if (rowIndex < 0 || rowIndex >= getRowCount()) {
             return null;
         }
         int blockIndex = rowIndex / BLOCK_SIZE;
@@ -178,11 +245,10 @@ public final class DataTable {
 
         long offsetRow = getBlockStartRow(blockIndex);
         long limitCount = getBlockRowCount(blockIndex);
-        // int columnCount = columnNames.size();
 
         String query = String.format(
                 "SELECT * FROM '%s' LIMIT %d OFFSET %d",
-                absoluteParquetPath, limitCount, offsetRow);
+                tableName, limitCount, offsetRow);
 
         try {
             Object[][] blockData;

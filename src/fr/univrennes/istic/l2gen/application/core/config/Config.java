@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.univrennes.istic.l2gen.application.VectorReport;
-import fr.univrennes.istic.l2gen.application.core.table.DataTableInfo;
+import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 
 public final class Config {
     private static Config instance;
-    private List<DataTableInfo> recentTables = new ArrayList<>();
+    private List<DataTable> recentTables = new ArrayList<>();
 
     public static Config getInstance() {
         if (instance == null) {
@@ -34,11 +34,11 @@ public final class Config {
         return new File(getAppDataDirectory(), fileName);
     }
 
-    public List<DataTableInfo> getRecentTables() {
+    public List<DataTable> getRecentTables() {
         return recentTables;
     }
 
-    public void addRecentFiles(List<DataTableInfo> files) {
+    public void addRecentFiles(List<DataTable> files) {
         this.recentTables.addAll(files);
     }
 

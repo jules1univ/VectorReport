@@ -6,8 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.*;
 
+import fr.univrennes.istic.l2gen.application.VectorReport;
 import fr.univrennes.istic.l2gen.application.core.config.Config;
-import fr.univrennes.istic.l2gen.application.core.table.DataTableInfo;
+import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 
 public final class FileService {
 
@@ -23,7 +24,7 @@ public final class FileService {
         return Config.getInstance().getAppDataFile(file.getName() + ".parquet");
     }
 
-    public static List<DataTableInfo> process(File file) {
+    public static List<DataTable> process(File file) {
         if (!file.exists())
             return List.of();
 
@@ -45,7 +46,7 @@ public final class FileService {
                     case "csv":
                     case "tsv":
                     case "txt": {
-                        DataTableInfo info = convertToParquet(file);
+                        DataTable info = convertToParquet(file);
                         if (info != null) {
                             return List.of(info);
                         } else {
@@ -53,7 +54,7 @@ public final class FileService {
                         }
                     }
                     case "parquet": {
-                        DataTableInfo info = DataTableInfo.of(file);
+                        DataTable info = DataTable.of(file);
                         if (info != null) {
                             return List.of(info);
                         } else {
@@ -71,23 +72,23 @@ public final class FileService {
         return List.of();
     }
 
-    private static List<DataTableInfo> processDirectory(File dir) {
+    private static List<DataTable> processDirectory(File dir) {
         File[] files = dir.listFiles();
         if (files == null) {
             return List.of();
         }
 
-        List<DataTableInfo> result = new ArrayList<>();
+        List<DataTable> result = new ArrayList<>();
         for (File f : files) {
             result.addAll(process(f));
         }
         return result;
     }
 
-    private static List<DataTableInfo> processZip(File zipFile) throws IOException {
+    private static List<DataTable> processZip(File zipFile) throws IOException {
 
         Path dir = Config.getInstance().getAppDataDirectory().toPath().resolve(zipFile.getName());
-        List<DataTableInfo> result = new ArrayList<>();
+        List<DataTable> result = new ArrayList<>();
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -111,11 +112,14 @@ public final class FileService {
         return result;
     }
 
-    private static DataTableInfo convertToParquet(File file) {
+    private static DataTable convertToParquet(File file) {
         try {
             File output = Config.getInstance().getAppDataFile(file.getName() + ".parquet");
             return ConverterService.convert(file, output);
         } catch (Exception e) {
+            if (VectorReport.DEBUG_MODE) {
+                e.printStackTrace();
+            }
             return null;
         }
     }

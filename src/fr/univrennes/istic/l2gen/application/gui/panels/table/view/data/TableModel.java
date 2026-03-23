@@ -63,7 +63,7 @@ public final class TableModel extends AbstractTableModel {
         if (table == null) {
             return 0;
         }
-        return (int) Math.ceil((double) table.getInfo().getRowCount() / pageSize);
+        return (int) Math.ceil((double) table.getRowCount() / pageSize);
     }
 
     public int getPageSize() {
@@ -84,7 +84,7 @@ public final class TableModel extends AbstractTableModel {
         if (table == null) {
             return 0;
         }
-        return (int) table.getInfo().getRowCount();
+        return (int) table.getRowCount();
     }
 
     private int getPageStartRow() {
@@ -95,7 +95,7 @@ public final class TableModel extends AbstractTableModel {
         if (table == null) {
             return 0;
         }
-        return Math.min(getPageStartRow() + pageSize, (int) table.getInfo().getRowCount());
+        return Math.min(getPageStartRow() + pageSize, (int) table.getRowCount());
     }
 
     private void prefetchCurrentPage() {
@@ -118,7 +118,7 @@ public final class TableModel extends AbstractTableModel {
         if (table == null) {
             return 0;
         }
-        return (int) table.getInfo().getColumnCount();
+        return (int) table.getColumnCount();
     }
 
     @Override
@@ -126,7 +126,7 @@ public final class TableModel extends AbstractTableModel {
         if (table == null) {
             return "";
         }
-        return table.getColumnName(columnIndex);
+        return table.getRawColumnName(columnIndex);
     }
 
     @Override

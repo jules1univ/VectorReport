@@ -10,7 +10,6 @@
 
 <!-- > Preview 🎥 -->
 <!-- TODO: ajouter des images du projet ici -->
-<!-- Vu CLI -->
 <!-- Vu Desktop -->
 
 ## Setup

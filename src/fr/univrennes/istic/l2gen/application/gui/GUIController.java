@@ -26,9 +26,9 @@ import com.formdev.flatlaf.util.SystemFileChooser;
 import fr.univrennes.istic.l2gen.application.core.CoreController;
 import fr.univrennes.istic.l2gen.application.core.config.Config;
 import fr.univrennes.istic.l2gen.application.core.services.FileService;
+import fr.univrennes.istic.l2gen.application.core.services.StaticsticAction;
 import fr.univrennes.istic.l2gen.application.core.services.StatisticService;
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
-import fr.univrennes.istic.l2gen.application.core.table.DataTableInfo;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
 public final class GUIController extends CoreController {
@@ -59,25 +59,21 @@ public final class GUIController extends CoreController {
         }
     }
 
-    public void onOpenParquetTable(File file) {
-        try {
-            DataTable table = DataTable.of(file);
-            currentTable = table;
+    public Optional<DataTable> getTable() {
+        return Optional.ofNullable(currentTable);
+    }
 
-            SwingUtilities.invokeLater(() -> {
-                mainView.getTablePanel().getTable().open(table);
-                mainView.getBottomBar().setTableInfo(
-                        table.getInfo().getAlias(),
-                        (int) table.getInfo().getRowCount(),
-                        (int) table.getInfo().getColumnCount());
-                setStatus("Loaded " + table.getInfo().getAlias());
-            });
-        } catch (IOException e) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(mainView,
-                    "Failed to open Parquet file.\n" + e.getMessage(),
-                    "Open Error",
-                    JOptionPane.ERROR_MESSAGE));
-        }
+    public void setTable(DataTable table) {
+        currentTable = table;
+
+        SwingUtilities.invokeLater(() -> {
+            mainView.getBottomBar().setTableInfo(
+                    table.getAlias(),
+                    (int) table.getRowCount(),
+                    (int) table.getColumnCount());
+
+            setStatus("Loaded " + table.getAlias());
+        });
     }
 
     public void onCloseTable() {
@@ -95,14 +91,14 @@ public final class GUIController extends CoreController {
     }
 
     public void onColumnSelected(int columnIndex) {
-        if (mainView != null) {
+        if (mainView != null && currentTable != null) {
             mainView.getBottomBar().clearColumnStats();
 
             CompletableFuture.runAsync(() -> {
-                Optional<String> min = StatisticService.computeMin(currentTable, columnIndex);
-                Optional<String> max = StatisticService.computeMax(currentTable, columnIndex);
-                Optional<String> avg = StatisticService.computeAvg(currentTable, columnIndex);
-                Optional<String> sum = StatisticService.computeSum(currentTable, columnIndex);
+                Optional<String> min = StatisticService.computeBase(currentTable, columnIndex, StaticsticAction.MIN);
+                Optional<String> max = StatisticService.computeBase(currentTable, columnIndex, StaticsticAction.MAX);
+                Optional<String> avg = StatisticService.computeBase(currentTable, columnIndex, StaticsticAction.AVG);
+                Optional<String> sum = StatisticService.computeBase(currentTable, columnIndex, StaticsticAction.SUM);
 
                 SwingUtilities.invokeLater(() -> mainView.getBottomBar().setColumnStats(min, max, avg, sum));
             });
@@ -131,10 +127,6 @@ public final class GUIController extends CoreController {
 
     public void onFilterCleared(int columnIndex) {
 
-    }
-
-    public Optional<DataTable> getTable() {
-        return Optional.ofNullable(currentTable);
     }
 
     public void onOpenFilterDialog() {
@@ -178,20 +170,20 @@ public final class GUIController extends CoreController {
         setLoading(true);
         setStatus("Processing " + selectedFiles.length + " files...");
 
-        new SwingWorker<List<DataTableInfo>, Void>() {
+        new SwingWorker<List<DataTable>, Void>() {
             @Override
-            protected List<DataTableInfo> doInBackground() throws Exception {
+            protected List<DataTable> doInBackground() throws Exception {
                 long startTime = System.currentTimeMillis();
-                List<DataTableInfo> processedFiles = new ArrayList<>();
+                List<DataTable> processedFiles = new ArrayList<>();
 
                 for (File file : selectedFiles) {
                     boolean useCached = useCachedDecisions.getOrDefault(file, false);
 
                     if (useCached) {
                         File parquetFile = FileService.getProcessedFile(file);
-                        DataTableInfo info = DataTableInfo.of(parquetFile);
-                        if (info != null) {
-                            processedFiles.add(info);
+                        DataTable table = DataTable.of(parquetFile);
+                        if (table != null) {
+                            processedFiles.add(table);
                             continue;
                         }
                     } else if (FileService.isAlreadyProcessed(file)) {
@@ -211,10 +203,10 @@ public final class GUIController extends CoreController {
             @Override
             protected void done() {
                 try {
-                    List<DataTableInfo> processedFiles = get();
+                    List<DataTable> processedFiles = get();
                     SwingUtilities.invokeLater(() -> {
                         if (processedFiles.size() == 1) {
-                            mainView.getTablePanel().open(processedFiles.get(0).getSource());
+                            mainView.getTablePanel().open(processedFiles.get(0));
                         } else {
                             getMainView().getTablePanel().refresh();
                         }
