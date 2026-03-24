@@ -102,6 +102,7 @@ public final class GUIController extends CoreController {
 
     public void onColumnSortRequested(int columnIndex, boolean ascending) {
         if (currentTable != null) {
+            currentTable.clearAllFilters();
             currentTable.addFilter(Filter.sort(columnIndex, ascending));
             mainView.getTablePanel().refresh();
         }
@@ -174,8 +175,15 @@ public final class GUIController extends CoreController {
         File[] selectedFiles = chooser.getSelectedFiles();
 
         if (selectedFiles.length == 1 && FileService.isParquetFile(selectedFiles[0])) {
-            getMainView().getTablePanel().open(selectedFiles[0]);
-            return;
+            try {
+                DataTable table = DataTable.of(selectedFiles[0]);
+                Config.getInstance().addRecentFiles(List.of(table));
+                getMainView().getTablePanel().open(table);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(mainView, "Failed to load Parquet file.\n" + e.getMessage(),
+                        "Load Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
 
         Map<File, Boolean> useCachedDecisions = new HashMap<>();

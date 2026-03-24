@@ -28,7 +28,7 @@ public final class TableColumnContextMenu extends JPopupMenu {
         JMenuItem renameColumnItem = new JMenuItem("Rename column");
         renameColumnItem.addActionListener(e -> {
             String newName = JOptionPane.showInputDialog(tableView, "New column name:",
-                    tableView.getTable().getColumnName(columnIndex));
+                    tableView.getTableView().getColumnName(columnIndex));
             if (newName != null && !newName.isBlank()) {
                 tableView.renameColumn(columnIndex, newName);
             }

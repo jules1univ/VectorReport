@@ -2,6 +2,9 @@ package fr.univrennes.istic.l2gen.application.gui.panels.table.view.data;
 
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 
+import java.lang.foreign.Linker.Option;
+import java.util.Optional;
+
 import javax.swing.table.AbstractTableModel;
 
 public final class TableModel extends AbstractTableModel {
@@ -33,6 +36,10 @@ public final class TableModel extends AbstractTableModel {
         fireTableStructureChanged();
     }
 
+    public Optional<DataTable> getTable() {
+        return Optional.ofNullable(table);
+    }
+
     public void goToPage(int newPageIndex) {
         if (table == null) {
             return;
@@ -44,7 +51,7 @@ public final class TableModel extends AbstractTableModel {
         this.pageIndex = newPageIndex;
         prefetchCurrentPage();
         fireTableDataChanged();
-        tableView.adjustColumnWidths();
+        tableView.refresh();
     }
 
     public void nextPage() {

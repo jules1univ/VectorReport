@@ -276,6 +276,16 @@ public final class DataTable {
         invalidateCache();
     }
 
+    public List<Filter> getFilter(int columnIndex) {
+        return filters.stream()
+                .filter(f -> f.getColumnIndex() == columnIndex)
+                .toList();
+    }
+
+    public List<Filter> getAllFilters() {
+        return filters;
+    }
+
     public void clearFilters(int columnIndex) {
         filters.removeIf(f -> f.getColumnIndex() == columnIndex);
         invalidateCache();

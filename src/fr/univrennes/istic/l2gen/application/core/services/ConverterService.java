@@ -28,7 +28,8 @@ public final class ConverterService {
                                 + "header=true, "
                                 + "all_varchar=true, "
                                 + "ignore_errors=true, "
-                                + "null_padding=true"
+                                + "null_padding=true,"
+                                + "nullstr=['',' ']"
                                 + ")"
                                 + ") TO '%s' (FORMAT PARQUET, CODEC 'SNAPPY')",
                         formatIn,
@@ -43,15 +44,14 @@ public final class ConverterService {
                         String.format("DESCRIBE SELECT * FROM '%s'", formatOut));
 
                 List<String> columnNames = new ArrayList<>();
-                List<DataType> columnTypes = new ArrayList<>();
-
                 long columnCount = 0;
                 while (columnResult.next()) {
                     columnCount++;
 
                     columnNames.add(columnResult.getString("column_name"));
-                    columnTypes.add(DataType.fromSQL(columnResult.getString("column_type")));
                 }
+
+                List<DataType> columnTypes = TypeInferenceService.inferColumnTypes(statement, formatOut, columnNames);
 
                 String alias = inputPath.getName().replaceFirst("[.][^.]+$", "");
                 return new DataTable(outputPath, alias, columnNames, columnTypes, rowCount, columnCount);
