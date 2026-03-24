@@ -52,11 +52,11 @@ public final class TableListView extends JPanel {
         listModel.setRowCount(0);
         for (DataTable table : Config.getInstance().getRecentTables()) {
             listModel.addRow(new Object[] {
-                    table.getTablePath(),
+                    table.getPath(),
                     table.getAlias(),
                     table.getRowCount(),
                     table.getColumnCount(),
-                    formatSize(table.getTablePath().length())
+                    formatSize(table.getPath().length())
             });
         }
     }

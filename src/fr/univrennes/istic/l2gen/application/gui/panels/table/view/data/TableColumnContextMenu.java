@@ -58,14 +58,6 @@ public final class TableColumnContextMenu extends JPopupMenu {
     private JMenu buildFilterMenu() {
         JMenu filterMenu = new JMenu("Filter");
 
-        JMenu filterByCategoryMenu = new JMenu("By category");
-        JMenuItem filterCatCountItem = new JMenuItem("Count items");
-        filterCatCountItem.addActionListener(e -> controller.onFilterByCategoryRequested(columnIndex, false));
-        JMenuItem filterCatPercentageItem = new JMenuItem("Percentage of items");
-        filterCatPercentageItem.addActionListener(e -> controller.onFilterByCategoryRequested(columnIndex, true));
-        filterByCategoryMenu.add(filterCatCountItem);
-        filterByCategoryMenu.add(filterCatPercentageItem);
-
         JMenuItem filterTopNItem = new JMenuItem("Top N values");
         filterTopNItem.addActionListener(e -> {
             String input = JOptionPane.showInputDialog(tableView, "Show top N values:");
@@ -120,11 +112,11 @@ public final class TableColumnContextMenu extends JPopupMenu {
         JMenuItem clearFilterItem = new JMenuItem("Clear filters");
         clearFilterItem.addActionListener(e -> controller.onFilterCleared(columnIndex));
 
-        filterMenu.add(filterByCategoryMenu);
-        filterMenu.addSeparator();
         filterMenu.add(filterTopNItem);
         filterMenu.add(filterBottomNItem);
+        filterMenu.addSeparator();
         filterMenu.add(filterNumericRangeItem);
+        filterMenu.addSeparator();
         filterMenu.add(filterEmptyItem);
         filterMenu.add(filterNonEmptyItem);
         filterMenu.addSeparator();

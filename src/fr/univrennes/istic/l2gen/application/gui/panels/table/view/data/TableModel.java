@@ -126,7 +126,7 @@ public final class TableModel extends AbstractTableModel {
         if (table == null) {
             return "";
         }
-        return table.getRawColumnName(columnIndex);
+        return table.getColumnName(columnIndex);
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.duckdb.DuckDBConnection;
 
 import fr.univrennes.istic.l2gen.application.VectorReport;
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
+import fr.univrennes.istic.l2gen.application.core.table.DataType;
 
 import java.io.File;
 import java.sql.DriverManager;
@@ -38,17 +39,22 @@ public final class ConverterService {
                 countResult.next();
                 long rowCount = countResult.getLong(1);
 
-                List<String> columnNames = new ArrayList<>();
-                ResultSet columnCountResult = statement.executeQuery(
+                ResultSet columnResult = statement.executeQuery(
                         String.format("DESCRIBE SELECT * FROM '%s'", formatOut));
+
+                List<String> columnNames = new ArrayList<>();
+                List<DataType> columnTypes = new ArrayList<>();
+
                 long columnCount = 0;
-                while (columnCountResult.next()) {
+                while (columnResult.next()) {
                     columnCount++;
-                    columnNames.add(columnCountResult.getString("column_name"));
+
+                    columnNames.add(columnResult.getString("column_name"));
+                    columnTypes.add(DataType.fromSQL(columnResult.getString("column_type")));
                 }
 
                 String alias = inputPath.getName().replaceFirst("[.][^.]+$", "");
-                return new DataTable(outputPath, alias, columnNames, rowCount, columnCount);
+                return new DataTable(outputPath, alias, columnNames, columnTypes, rowCount, columnCount);
             }
         } catch (Exception e) {
             if (VectorReport.DEBUG_MODE) {

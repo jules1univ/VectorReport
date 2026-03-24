@@ -29,6 +29,7 @@ import fr.univrennes.istic.l2gen.application.core.services.FileService;
 import fr.univrennes.istic.l2gen.application.core.services.StaticsticAction;
 import fr.univrennes.istic.l2gen.application.core.services.StatisticService;
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
+import fr.univrennes.istic.l2gen.application.core.filter.Filter;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
 public final class GUIController extends CoreController {
@@ -48,15 +49,11 @@ public final class GUIController extends CoreController {
     }
 
     public void setLoading(boolean isLoading) {
-        if (mainView != null) {
-            mainView.getBottomBar().setLoading(isLoading);
-        }
+        mainView.getBottomBar().setLoading(isLoading);
     }
 
     public void setStatus(String status) {
-        if (mainView != null) {
-            mainView.getBottomBar().setStatus(status);
-        }
+        mainView.getBottomBar().setStatus(status);
     }
 
     public Optional<DataTable> getTable() {
@@ -82,16 +79,14 @@ public final class GUIController extends CoreController {
             currentTable = null;
         }
 
-        if (mainView != null) {
-            mainView.getTablePanel().close();
-            mainView.getBottomBar().setTableInfo("", 0, 0);
-            mainView.getBottomBar().clearColumnStats();
-            setStatus("Ready");
-        }
+        mainView.getTablePanel().close();
+        mainView.getBottomBar().setTableInfo("", 0, 0);
+        mainView.getBottomBar().clearColumnStats();
+        setStatus("Ready");
     }
 
     public void onColumnSelected(int columnIndex) {
-        if (mainView != null && currentTable != null) {
+        if (currentTable != null) {
             mainView.getBottomBar().clearColumnStats();
 
             CompletableFuture.runAsync(() -> {
@@ -106,27 +101,60 @@ public final class GUIController extends CoreController {
     }
 
     public void onColumnSortRequested(int columnIndex, boolean ascending) {
-
+        if (currentTable != null) {
+            currentTable.addFilter(Filter.sort(columnIndex, ascending));
+            mainView.getTablePanel().refresh();
+        }
     }
 
-    public void onFilterByCategoryRequested(int columnIndex, boolean percentage) {
-
+    public void onFilterSearchRequested(int columnIndex, String searchTerm) {
+        if (currentTable != null) {
+            currentTable.addFilter(Filter.search(columnIndex, searchTerm));
+            mainView.getTablePanel().refresh();
+        }
     }
 
     public void onFilterTopNRequested(int columnIndex, int n, boolean top) {
-
+        if (currentTable != null) {
+            if (top) {
+                currentTable.addFilter(Filter.topN(columnIndex, n));
+            } else {
+                currentTable.addFilter(Filter.bottomN(columnIndex, n));
+            }
+            mainView.getTablePanel().refresh();
+        }
     }
 
     public void onFilterByRangeRequested(int columnIndex, double minValue, double maxValue) {
-
+        if (currentTable != null) {
+            currentTable.addFilter(Filter.byRange(columnIndex, minValue, maxValue));
+            mainView.getTablePanel().refresh();
+        }
     }
 
     public void onFilterEmptyRequested(int columnIndex, boolean showEmpty) {
-
+        if (currentTable != null) {
+            if (showEmpty) {
+                currentTable.addFilter(Filter.showEmpty(columnIndex));
+            } else {
+                currentTable.addFilter(Filter.hideEmpty(columnIndex));
+            }
+            mainView.getTablePanel().refresh();
+        }
     }
 
     public void onFilterCleared(int columnIndex) {
+        if (currentTable != null) {
+            currentTable.clearFilters(columnIndex);
+            mainView.getTablePanel().refresh();
+        }
+    }
 
+    public void onFilterReset() {
+        if (currentTable != null) {
+            currentTable.clearAllFilters();
+            mainView.getTablePanel().refresh();
+        }
     }
 
     public void onOpenFilterDialog() {
