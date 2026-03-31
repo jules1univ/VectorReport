@@ -37,10 +37,12 @@ public final class GUIController extends CoreController {
     @Override
     public void onStart() {
         this.mainView.getTablePanel().refresh();
+        setStatus("Ready");
     }
 
     @Override
     public void onStop() {
+        setStatus("Shutting down...");
         if (currentTable != null) {
             currentTable.close();
         }
@@ -75,7 +77,7 @@ public final class GUIController extends CoreController {
                     (int) table.getRowCount(),
                     (int) table.getColumnCount());
 
-            setStatus("Loaded " + table.getAlias());
+            setStatus("Openning table " + table.getAlias());
         });
     }
 
@@ -88,7 +90,6 @@ public final class GUIController extends CoreController {
         mainView.getTablePanel().close();
         mainView.getBottomBar().setTableInfo("", 0, 0);
         mainView.getBottomBar().clearColumnStats();
-        setStatus("Ready");
     }
 
     public void onColumnSelected(int columnIndex) {
@@ -121,11 +122,8 @@ public final class GUIController extends CoreController {
 
                         SwingUtilities.invokeLater(() -> mainView.getBottomBar().setColumnStats(min, max, avg, sum));
 
-                    } catch (InterruptedException | ExecutionException e) {
-                        if (VectorReport.DEBUG_MODE) {
-                            e.printStackTrace();
-                        }
-                        return;
+                    } catch (Exception e) {
+                        onOpenExceptionDialog(e);
                     } finally {
                         setLoading(false);
                     }
@@ -194,6 +192,10 @@ public final class GUIController extends CoreController {
     }
 
     public void onOpenExceptionDialog(Exception e) {
+        if (VectorReport.DEBUG_MODE) {
+            e.printStackTrace();
+        }
+
         Throwable rootCause = e.getCause() != null ? e.getCause() : e;
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(
@@ -279,6 +281,7 @@ public final class GUIController extends CoreController {
         }
 
         setLoading(true);
+        setStatus("Loading " + input + " ...");
         new SwingWorker<List<DataTable>, Void>() {
             @Override
             protected List<DataTable> doInBackground() throws Exception {

@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Path;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -47,7 +46,7 @@ public final class TableService {
     }
 
     public static List<DataTable> get() {
-        return new ArrayList<>(loaded.values());
+        return loaded.values().stream().toList();
     }
 
     public static List<DataTable> load(File file) {
