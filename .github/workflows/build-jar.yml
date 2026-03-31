@@ -1,0 +1,27 @@
+name: Build
+on: [release]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build JAR with Maven
+        run: mvn -B package -DskipTests
+
+      - name: Prepare artifact
+        run: cp target/vectorreport-1.0-SNAPSHOT.jar VectorReport.jar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorReport
+          path: VectorReport.jar

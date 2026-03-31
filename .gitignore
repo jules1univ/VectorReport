@@ -1,0 +1,15 @@
+# Dossier de compilation java
+/bin
+/target
+/.m2
+/.metals
+/.m2
+*.db
+*.jar
+
+# Resultat de l'app
+/*.svg
+/output
+
+# Java docs 
+/doc
