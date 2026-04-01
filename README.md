@@ -49,7 +49,7 @@ cd VectorReport
 
 ## Contribution
 
-**Membres**: [Liste des mebres](docs/MEMBERS.md)
+**Membres**: [Liste des membres](docs/MEMBERS.md)
 
 **Contribution**: [Guide de contribution](CONTRIBUTING.md)
 

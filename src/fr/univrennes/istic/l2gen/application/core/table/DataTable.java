@@ -44,7 +44,8 @@ public final class DataTable {
     private final List<Filter> filters = new ArrayList<>();
 
     public static DataTable of(File file) throws IOException {
-        if (!file.canRead() || !file.isFile() || file.length() == 0 || FileService.getExtension(file) != "parquet") {
+        if (!file.canRead() || !file.isFile() || file.length() == 0
+                || !FileService.getExtension(file).equals("parquet")) {
             return null;
         }
 
