@@ -3,19 +3,20 @@ package fr.univrennes.istic.l2gen.application.core.services;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.Path;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -23,11 +24,12 @@ import java.util.zip.ZipInputStream;
 import org.duckdb.DuckDBConnection;
 
 import fr.univrennes.istic.l2gen.application.VectorReport;
+import fr.univrennes.istic.l2gen.application.core.config.Config;
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 import fr.univrennes.istic.l2gen.application.core.table.DataType;
 
 public final class TableService {
-    private static final HashMap<File, DataTable> loaded = new HashMap<>();
+    private static final Map<File, DataTable> loaded = Collections.synchronizedMap(new HashMap<>());
     private static File[] recents = null;
 
     public static DataTable get(File file) {
@@ -35,7 +37,7 @@ public final class TableService {
             return loaded.get(file);
         }
 
-        List<DataTable> tables = load(file);
+        List<DataTable> tables = load(file, file.getParentFile());
         if (!tables.isEmpty()) {
             DataTable table = tables.get(0);
             loaded.put(file, table);
@@ -49,7 +51,7 @@ public final class TableService {
         return loaded.values().stream().toList();
     }
 
-    public static List<DataTable> load(File file) {
+    public static List<DataTable> load(File file, File targetDir) {
         if (!file.exists()) {
             return List.of();
         }
@@ -64,7 +66,7 @@ public final class TableService {
 
                 switch (ext) {
                     case "zip":
-                        return processZip(file);
+                        return processZip(file, targetDir);
                     case "csv":
                     case "tsv":
                     case "txt": {
@@ -93,10 +95,10 @@ public final class TableService {
         return List.of();
     }
 
-    public static List<DataTable> load(URI uri) {
+    public static List<DataTable> load(URI uri, File targetDir) {
         try {
             URL url = uri.toURL();
-            return processURL(url);
+            return processURL(targetDir, url);
         } catch (Exception e) {
             if (VectorReport.DEBUG_MODE) {
                 e.printStackTrace();
@@ -162,25 +164,23 @@ public final class TableService {
 
         List<DataTable> result = new ArrayList<>();
         for (File f : files) {
-            result.addAll(load(f));
+            result.addAll(load(f, dir));
         }
         return result;
     }
 
-    private static List<DataTable> processURL(URL url) {
+    private static List<DataTable> processURL(File targetDir, URL url) {
         try {
-            File downloadDir = FileService.getDownloadDirectory();
-
             HttpURLConnection conn;
             conn = (HttpURLConnection) url.openConnection();
             conn.setInstanceFollowRedirects(true);
 
-            File file = new File(downloadDir, FileService.getRemoteFileName(conn, url));
+            File file = new File(targetDir, FileService.getRemoteFileName(conn, url));
             try (InputStream in = conn.getInputStream();
                     FileOutputStream fos = new FileOutputStream(file)) {
                 in.transferTo(fos);
             }
-            return load(file);
+            return load(file, targetDir);
         } catch (Exception e) {
             if (VectorReport.DEBUG_MODE) {
                 e.printStackTrace();
@@ -190,27 +190,30 @@ public final class TableService {
         return List.of();
     }
 
-    private static List<DataTable> processZip(File zipFile) throws IOException {
+    private static List<DataTable> processZip(File zipFile, File targetDir) throws IOException {
 
-        Path dir = FileService.getDownloadDirectory().toPath();
         List<DataTable> result = new ArrayList<>();
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
 
-                File file = new File(dir.toFile(), entry.getName());
+                File resolvedFile = new File(targetDir, entry.getName()).getCanonicalFile();
+
+                if (!resolvedFile.toPath().startsWith(targetDir.getCanonicalFile().toPath())) {
+                    throw new IOException("Zip Slip detected: " + entry.getName());
+                }
+
                 if (entry.isDirectory()) {
-                    file.mkdirs();
+                    resolvedFile.mkdirs();
                     continue;
                 }
 
-                new File(file.getParent()).mkdirs();
-
-                try (FileOutputStream fos = new FileOutputStream(file)) {
+                resolvedFile.getParentFile().mkdirs();
+                try (FileOutputStream fos = new FileOutputStream(resolvedFile)) {
                     zis.transferTo(fos);
                 }
 
-                result.addAll(load(file));
+                result.addAll(load(resolvedFile, targetDir));
             }
         }
 
@@ -221,10 +224,11 @@ public final class TableService {
         if (recents == null) {
             loadRecents();
         }
-        for (int i = recents.length - 1; i > 0; i--) {
-            recents[i] = recents[i - 1];
+        for (int index = recents.length - 1; index > 0; index--) {
+            recents[index] = recents[index - 1];
         }
         recents[0] = file;
+        saveRecents();
     }
 
     public static List<File> getRecentTables() {
@@ -236,39 +240,25 @@ public final class TableService {
 
     public static void loadRecents() {
         recents = new File[10];
-
-        File configFile = FileService.getAppDataFile("tables.cfg");
-        if (!configFile.exists()) {
-            return;
-        }
-
-        try (Scanner scanner = new Scanner(configFile)) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                File file = new File(line);
-                if (file.exists() && file.canRead()) {
-                    addRecent(file);
-                }
-            }
-        } catch (Exception e) {
-            if (VectorReport.DEBUG_MODE) {
-                e.printStackTrace();
+        Config.get().getByteArray("recents", new byte[0]);
+        try (Scanner scanner = new Scanner(
+                new ByteArrayInputStream(Config.get().getByteArray("recents", new byte[0])))) {
+            int i = 0;
+            while (scanner.hasNextLine() && i < recents.length) {
+                recents[i] = new File(scanner.nextLine());
+                i++;
             }
         }
     }
 
     public static void saveRecents() {
-        try (FileWriter writer = new FileWriter(FileService.getAppDataFile("tables.cfg"))) {
-            for (File file : recents) {
-                if (file != null) {
-                    writer.write(file.getAbsolutePath() + System.lineSeparator());
-                }
-            }
-        } catch (Exception e) {
-            if (VectorReport.DEBUG_MODE) {
-                e.printStackTrace();
+        StringBuilder sb = new StringBuilder();
+        for (File f : recents) {
+            if (f != null) {
+                sb.append(f.getAbsolutePath()).append("\n");
             }
         }
+        Config.get().putByteArray("recents", sb.toString().getBytes());
     }
 
 }

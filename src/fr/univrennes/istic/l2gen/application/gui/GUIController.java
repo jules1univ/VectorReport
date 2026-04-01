@@ -17,10 +17,12 @@ import com.formdev.flatlaf.util.SystemFileChooser;
 import fr.univrennes.istic.l2gen.application.VectorReport;
 import fr.univrennes.istic.l2gen.application.core.CoreController;
 import fr.univrennes.istic.l2gen.application.core.config.Config;
+import fr.univrennes.istic.l2gen.application.core.services.FileService;
 import fr.univrennes.istic.l2gen.application.core.services.StatisticOp;
 import fr.univrennes.istic.l2gen.application.core.services.StatisticService;
 import fr.univrennes.istic.l2gen.application.core.services.TableService;
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
+import fr.univrennes.istic.l2gen.application.core.table.DataTableWorkerStatus;
 import fr.univrennes.istic.l2gen.application.core.filter.Filter;
 import fr.univrennes.istic.l2gen.application.core.lang.Lang;
 import fr.univrennes.istic.l2gen.application.gui.dialog.StatisticsDialog;
@@ -38,6 +40,24 @@ public final class GUIController extends CoreController {
     public void onStart() {
         this.mainView.getTablePanel().refresh();
         setStatus(Lang.get("status.ready"));
+
+        ///// REMOVE THIS LATER !!!
+        ///// SUPPRIMER CE CODE UNIQUEMENT POUR LE "PROJET DE GEN" PAS POUR APPLICATION
+        File targetDir = new File(System.getProperty("user.home"), ".VectorReport");
+        if (!targetDir.exists()) {
+            targetDir.mkdirs();
+        }
+        System.out.println("Target dir: " + targetDir.getAbsolutePath());
+        File ouputFile = new File(targetDir, "ValeursFoncieres-2024.txt.parquet");
+        if (!ouputFile.exists()) {
+            TableService.load(
+                    URI.create("https://www.data.gouv.fr/api/1/datasets/r/af812b0e-a898-4226-8cc8-5a570b257326"),
+                    targetDir);
+        }
+        mainView.getTablePanel().open(TableService.get(ouputFile));
+        /////
+        /////
+
     }
 
     @Override
@@ -213,51 +233,87 @@ public final class GUIController extends CoreController {
     }
 
     public void onOpenFileDialog() {
-        SystemFileChooser chooser = new SystemFileChooser();
-        chooser.setMultiSelectionEnabled(true);
-        chooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
+        SystemFileChooser fileChooser = new SystemFileChooser();
+        fileChooser.setMultiSelectionEnabled(true);
+        fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
 
-        if (chooser.showOpenDialog(this.getMainView()) != SystemFileChooser.APPROVE_OPTION) {
+        if (fileChooser.showOpenDialog(this.getMainView()) != SystemFileChooser.APPROVE_OPTION) {
             return;
         }
 
-        File[] files = chooser.getSelectedFiles();
+        File[] selectedFiles = fileChooser.getSelectedFiles();
+        boolean hasZip = false;
+        for (File file : selectedFiles) {
+            if (FileService.getExtension(file).equalsIgnoreCase("zip")) {
+                hasZip = true;
+                break;
+            }
+        }
+
+        final File targetDir;
+        if (hasZip) {
+            SystemFileChooser dirChooser = new SystemFileChooser();
+            dirChooser.setMultiSelectionEnabled(false);
+            dirChooser.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
+            dirChooser.setDialogTitle(Lang.get("dialog.select_target_dir"));
+
+            if (dirChooser.showOpenDialog(this.getMainView()) != SystemFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            targetDir = dirChooser.getSelectedFile();
+        } else {
+            targetDir = null;
+        }
 
         setLoading(true);
-        setStatus(Lang.get("status.loading_files", files.length));
+        setStatus(Lang.get("status.loading_files", selectedFiles.length));
 
-        new SwingWorker<List<DataTable>, Void>() {
+        new SwingWorker<List<DataTable>, DataTableWorkerStatus>() {
             @Override
             protected List<DataTable> doInBackground() throws Exception {
-                List<DataTable> loaded = new ArrayList<>();
-
+                List<DataTable> loadedTables = new ArrayList<>();
                 long startTime = System.currentTimeMillis();
-                for (File file : files) {
-                    List<DataTable> loadedFiles = TableService.load(file);
+
+                for (File file : selectedFiles) {
+                    if (FileService.getExtension(file).equalsIgnoreCase("zip")) {
+                        loadedTables.addAll(TableService.load(file, targetDir));
+                        continue;
+                    }
+
+                    List<DataTable> loadedFiles = TableService.load(file, file.getParentFile());
                     if (loadedFiles.isEmpty()) {
                         continue;
                     }
 
                     TableService.addRecent(file);
-                    loaded.addAll(loadedFiles);
+                    loadedTables.addAll(loadedFiles);
                 }
-                long endTime = System.currentTimeMillis();
 
-                setStatus(Lang.get("status.loaded_files", loaded.size(), files.length, endTime - startTime));
-                return loaded;
+                long elapsed = System.currentTimeMillis() - startTime;
+                publish(new DataTableWorkerStatus(loadedTables.size(), selectedFiles.length, elapsed));
+                return loadedTables;
+            }
+
+            @Override
+            protected void process(List<DataTableWorkerStatus> chunks) {
+                DataTableWorkerStatus status = chunks.get(chunks.size() - 1);
+                if (status.totalCount() == 1) {
+                    setStatus(Lang.get("status.loaded_file", status.loadedCount(), status.elapsed()));
+                } else {
+                    setStatus(Lang.get("status.loaded_files", status.loadedCount(), status.totalCount(),
+                            status.elapsed()));
+                }
             }
 
             @Override
             protected void done() {
                 try {
-                    List<DataTable> loaded = get();
-                    SwingUtilities.invokeLater(() -> {
-                        if (loaded.size() == 1) {
-                            mainView.getTablePanel().open(loaded.get(0));
-                        } else {
-                            getMainView().getTablePanel().refresh();
-                        }
-                    });
+                    List<DataTable> loadedTables = get();
+                    if (loadedTables.size() == 1) {
+                        mainView.getTablePanel().open(loadedTables.get(0));
+                    } else {
+                        getMainView().getTablePanel().refresh();
+                    }
                 } catch (Exception e) {
                     onOpenExceptionDialog(e);
                 } finally {
@@ -281,31 +337,49 @@ public final class GUIController extends CoreController {
             return;
         }
 
+        SystemFileChooser dirChooser = new SystemFileChooser();
+        dirChooser.setMultiSelectionEnabled(false);
+        dirChooser.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
+        dirChooser.setDialogTitle(Lang.get("dialog.select_target_dir"));
+
+        if (dirChooser.showOpenDialog(this.getMainView()) != SystemFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File targetDir = dirChooser.getSelectedFile();
+
         setLoading(true);
         setStatus(Lang.get("status.loading_url", input));
-        new SwingWorker<List<DataTable>, Void>() {
+
+        new SwingWorker<List<DataTable>, DataTableWorkerStatus>() {
             @Override
             protected List<DataTable> doInBackground() throws Exception {
-
                 long startTime = System.currentTimeMillis();
-                List<DataTable> loaded = TableService.load(uri);
-                long endTime = System.currentTimeMillis();
+                List<DataTable> loadedTables = TableService.load(uri, targetDir);
+                long elapsed = System.currentTimeMillis() - startTime;
 
-                setStatus(Lang.get("status.loaded_url", loaded.size(), endTime - startTime));
-                return loaded;
+                publish(new DataTableWorkerStatus(loadedTables.size(), 1, elapsed));
+                return loadedTables;
+            }
+
+            @Override
+            protected void process(List<DataTableWorkerStatus> chunks) {
+                DataTableWorkerStatus status = chunks.get(chunks.size() - 1);
+                if (status.totalCount() == 1) {
+                    setStatus(Lang.get("status.loaded_single_url", input, status.elapsed()));
+                } else {
+                    setStatus(Lang.get("status.loaded_url", status.loadedCount(), input, status.elapsed()));
+                }
             }
 
             @Override
             protected void done() {
                 try {
-                    List<DataTable> loaded = get();
-                    SwingUtilities.invokeLater(() -> {
-                        if (loaded.size() == 1) {
-                            mainView.getTablePanel().open(loaded.get(0));
-                        } else {
-                            getMainView().getTablePanel().refresh();
-                        }
-                    });
+                    List<DataTable> loadedTables = get();
+                    if (loadedTables.size() == 1) {
+                        mainView.getTablePanel().open(loadedTables.get(0));
+                    } else {
+                        getMainView().getTablePanel().refresh();
+                    }
                 } catch (Exception e) {
                     onOpenExceptionDialog(e);
                 } finally {
