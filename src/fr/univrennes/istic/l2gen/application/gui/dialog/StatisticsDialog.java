@@ -1,6 +1,9 @@
 package fr.univrennes.istic.l2gen.application.gui.dialog;
 
 import javax.swing.*;
+
+import fr.univrennes.istic.l2gen.application.core.lang.Lang;
+
 import java.awt.*;
 import java.awt.event.ActionListener;
 
@@ -12,12 +15,12 @@ public class StatisticsDialog extends JDialog {
     public StatisticsDialog(Frame parentFrame, String title, String content) {
         super(parentFrame, title, true);
         this.content = content;
-        buildUI();
+        build();
         pack();
         setLocationRelativeTo(parentFrame);
     }
 
-    private void buildUI() {
+    private void build() {
         JPanel rootPanel = new JPanel(new BorderLayout());
         setContentPane(rootPanel);
 
@@ -34,8 +37,8 @@ public class StatisticsDialog extends JDialog {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
 
-        JButton closeButton = new JButton("Close");
-        JButton addToNotebookButton = new JButton("Add to NoteBook");
+        JButton closeButton = new JButton(Lang.get("button.close"));
+        JButton addToNotebookButton = new JButton(Lang.get("button.add_to_notebook"));
 
         closeButton.addActionListener(buildCloseAction());
         addToNotebookButton.addActionListener(buildAddToNotebookAction());

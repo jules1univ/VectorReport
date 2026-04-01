@@ -8,6 +8,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import fr.univrennes.istic.l2gen.application.core.lang.Lang;
 import fr.univrennes.istic.l2gen.application.gui.GUIController;
 import fr.univrennes.istic.l2gen.application.gui.panels.report.ReportPanel;
 import fr.univrennes.istic.l2gen.application.gui.panels.table.TablePanel;
@@ -33,7 +34,7 @@ public final class MainView extends JFrame {
     }
 
     private void build() {
-        setTitle("VectorReport");
+        setTitle(Lang.get("app.title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1280, 800);
         setMinimumSize(new Dimension(700, 450));

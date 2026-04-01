@@ -1,14 +1,11 @@
 package fr.univrennes.istic.l2gen.application.gui;
 
-import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -23,6 +20,7 @@ import fr.univrennes.istic.l2gen.application.core.services.StatisticService;
 import fr.univrennes.istic.l2gen.application.core.services.TableService;
 import fr.univrennes.istic.l2gen.application.core.table.DataTable;
 import fr.univrennes.istic.l2gen.application.core.filter.Filter;
+import fr.univrennes.istic.l2gen.application.core.lang.Lang;
 import fr.univrennes.istic.l2gen.application.gui.dialog.StatisticsDialog;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
@@ -37,12 +35,12 @@ public final class GUIController extends CoreController {
     @Override
     public void onStart() {
         this.mainView.getTablePanel().refresh();
-        setStatus("Ready");
+        setStatus(Lang.get("status.ready"));
     }
 
     @Override
     public void onStop() {
-        setStatus("Shutting down...");
+        setStatus(Lang.get("status.shutting_down"));
         if (currentTable != null) {
             currentTable.close();
         }
@@ -77,12 +75,15 @@ public final class GUIController extends CoreController {
                     (int) table.getRowCount(),
                     (int) table.getColumnCount());
 
-            setStatus("Openning table " + table.getAlias());
+            setStatus(Lang.get("status.opening_table", table.getAlias()));
         });
     }
 
     public void onCloseTable() {
         if (currentTable != null) {
+            setStatus(Lang.get("status.closing_table",
+                    currentTable != null ? currentTable.getAlias() : Lang.get("error.number_na")));
+
             currentTable.close();
             currentTable = null;
         }
@@ -201,7 +202,7 @@ public final class GUIController extends CoreController {
             JOptionPane.showMessageDialog(
                     mainView,
                     rootCause.getClass().getSimpleName() + ": " + rootCause.getMessage(),
-                    "Processing Error",
+                    Lang.get("error.exception"),
                     JOptionPane.ERROR_MESSAGE);
         });
     }
@@ -221,7 +222,7 @@ public final class GUIController extends CoreController {
         File[] files = chooser.getSelectedFiles();
 
         setLoading(true);
-        setStatus("Loading " + files.length + " files...");
+        setStatus(Lang.get("status.loading_files", files.length));
 
         new SwingWorker<List<DataTable>, Void>() {
             @Override
@@ -240,8 +241,7 @@ public final class GUIController extends CoreController {
                 }
                 long endTime = System.currentTimeMillis();
 
-                setStatus("Loaded " + loaded.size() + "/" + files.length + " files in " + (endTime - startTime)
-                        + " ms");
+                setStatus(Lang.get("status.loaded_files", loaded.size(), files.length, endTime - startTime));
                 return loaded;
             }
 
@@ -274,14 +274,13 @@ public final class GUIController extends CoreController {
         URI uri;
         try {
             uri = URI.create(input.trim());
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(mainView, "Invalid URL.", "Invalid URL",
-                    JOptionPane.WARNING_MESSAGE);
+        } catch (Exception e) {
+            onOpenExceptionDialog(e);
             return;
         }
 
         setLoading(true);
-        setStatus("Loading " + input + " ...");
+        setStatus(Lang.get("status.loading_url", input));
         new SwingWorker<List<DataTable>, Void>() {
             @Override
             protected List<DataTable> doInBackground() throws Exception {
@@ -290,8 +289,7 @@ public final class GUIController extends CoreController {
                 List<DataTable> loaded = TableService.load(uri);
                 long endTime = System.currentTimeMillis();
 
-                setStatus("Loaded " + loaded.size() + " files in " + (endTime - startTime)
-                        + " ms");
+                setStatus(Lang.get("status.loaded_url", loaded.size(), endTime - startTime));
                 return loaded;
             }
 
@@ -316,30 +314,14 @@ public final class GUIController extends CoreController {
     }
 
     public void onOpenDocDialog() {
-        try {
-            if (!Desktop.isDesktopSupported()) {
-                JOptionPane.showMessageDialog(mainView, "Documentation is not available on this system.",
-                        "Documentation", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-            File docs = new File("docs/DOCUMENTATION.md");
-            if (!docs.exists()) {
-                JOptionPane.showMessageDialog(mainView, "Documentation file not found.", "Documentation",
-                        JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-            Desktop.getDesktop().open(docs);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(mainView, "Unable to open documentation.", "Documentation",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+
     }
 
     public void onOpenAboutDialog() {
         StringBuilder sb = new StringBuilder();
-        sb.append("VectorReport - Generate SVG charts from CSV files.\n");
-        sb.append("Version: 1.0.0\n");
-        sb.append("Developed by:\n");
+        sb.append(Lang.get("about.description")).append("\n");
+        sb.append(Lang.get("about.version")).append("\n");
+        sb.append(Lang.get("about.developed_by")).append("\n");
         sb.append(" - Jules Garcia (@jules1univ)\n");
         sb.append(" - Paul Gallon (@MarcoPaulot)\n");
         sb.append(" - Elouan Barbier (@Marsu2)\n");
@@ -348,9 +330,10 @@ public final class GUIController extends CoreController {
         sb.append(" - Kerem Eylem (@Keylem)\n");
         sb.append(" - Basile Guemene (@Astala-Boom)\n");
         sb.append("\n");
-        sb.append("This software is licensed under the MIT License.\n");
+        sb.append(Lang.get("about.license"));
 
-        JOptionPane.showMessageDialog(mainView, sb.toString(), "About VectorReport", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(mainView, sb.toString(), Lang.get("about.title"),
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void onComputeSummaryRequested(int columnIndex) {
@@ -364,7 +347,8 @@ public final class GUIController extends CoreController {
         OptionalDouble nullRateOpt = StatisticService.computeNullRate(currentTable, columnIndex);
         String nullRateStr = nullRateOpt.isPresent() ? String.format("%.2f%%", nullRateOpt.getAsDouble() * 100) : "N/A";
         StatisticsDialog dialog = new StatisticsDialog(mainView,
-                "Null Rate for " + currentTable.getColumnName(columnIndex), "Null Rate: " + nullRateStr);
+                Lang.get("statistics.null_rate.title", currentTable.getColumnName(columnIndex)),
+                Lang.get("statistics.null_rate.content", nullRateStr));
         dialog.setVisible(true);
     }
 
@@ -374,8 +358,8 @@ public final class GUIController extends CoreController {
                 ? String.format("%.2f%%", cardinalityRatioOpt.getAsDouble() * 100)
                 : "N/A";
         StatisticsDialog dialog = new StatisticsDialog(mainView,
-                "Cardinality Ratio for " + currentTable.getColumnName(columnIndex),
-                "Cardinality Ratio: " + cardinalityRatioStr);
+                Lang.get("statistics.cardinality_ratio.title", currentTable.getColumnName(columnIndex)),
+                Lang.get("statistics.cardinality_ratio.content", cardinalityRatioStr));
         dialog.setVisible(true);
     }
 
@@ -383,8 +367,8 @@ public final class GUIController extends CoreController {
         OptionalDouble iqrOpt = StatisticService.computeInterquartileRange(currentTable, columnIndex);
         String iqrStr = iqrOpt.isPresent() ? String.format("%.4f", iqrOpt.getAsDouble()) : "N/A";
         StatisticsDialog dialog = new StatisticsDialog(mainView,
-                "Interquartile Range for " + currentTable.getColumnName(columnIndex),
-                "Interquartile Range: " + iqrStr);
+                Lang.get("statistics.interquartile_range.title", currentTable.getColumnName(columnIndex)),
+                Lang.get("statistics.interquartile_range.content", iqrStr));
         dialog.setVisible(true);
     }
 
@@ -392,8 +376,8 @@ public final class GUIController extends CoreController {
         OptionalDouble skewnessOpt = StatisticService.computeSkewness(currentTable, columnIndex);
         String skewnessStr = skewnessOpt.isPresent() ? String.format("%.4f", skewnessOpt.getAsDouble()) : "N/A";
         StatisticsDialog dialog = new StatisticsDialog(mainView,
-                "Skewness for " + currentTable.getColumnName(columnIndex),
-                "Skewness: " + skewnessStr);
+                Lang.get("statistics.skewness.title", currentTable.getColumnName(columnIndex)),
+                Lang.get("statistics.skewness.content", skewnessStr));
         dialog.setVisible(true);
     }
 
@@ -401,8 +385,8 @@ public final class GUIController extends CoreController {
         OptionalDouble coefVarOpt = StatisticService.computeCoefficientOfVariation(currentTable, columnIndex);
         String coefVarStr = coefVarOpt.isPresent() ? String.format("%.4f", coefVarOpt.getAsDouble()) : "N/A";
         StatisticsDialog dialog = new StatisticsDialog(mainView,
-                "Coefficient of Variation for " + currentTable.getColumnName(columnIndex),
-                "Coefficient of Variation: " + coefVarStr);
+                Lang.get("statistics.coefficient_of_variation.title", currentTable.getColumnName(columnIndex)),
+                Lang.get("statistics.coefficient_of_variation.content", coefVarStr));
         dialog.setVisible(true);
     }
 
@@ -412,9 +396,9 @@ public final class GUIController extends CoreController {
         String correlationStr = correlationOpt.isPresent() ? String.format("%.4f", correlationOpt.getAsDouble())
                 : "N/A";
         StatisticsDialog dialog = new StatisticsDialog(mainView,
-                "Correlation between " + currentTable.getColumnName(columnIndex) + " and "
-                        + currentTable.getColumnName(targetColumnIndex),
-                "Correlation: " + correlationStr);
+                Lang.get("statistics.correlation.title", currentTable.getColumnName(columnIndex),
+                        currentTable.getColumnName(targetColumnIndex)),
+                Lang.get("statistics.correlation.content", correlationStr));
         dialog.setVisible(true);
 
     }

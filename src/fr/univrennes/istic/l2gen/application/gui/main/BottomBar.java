@@ -1,6 +1,9 @@
 package fr.univrennes.istic.l2gen.application.gui.main;
 
 import javax.swing.*;
+
+import fr.univrennes.istic.l2gen.application.core.lang.Lang;
+
 import java.awt.*;
 import java.util.Optional;
 
@@ -23,7 +26,7 @@ public final class BottomBar extends JPanel {
         setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Separator.foreground")));
         setPreferredSize(new Dimension(0, 26));
 
-        statusLabel = new JLabel("Ready");
+        statusLabel = new JLabel("");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
         statusLabel.setFont(statusLabel.getFont().deriveFont(Font.PLAIN, 11f));
         add(statusLabel, BorderLayout.WEST);
@@ -86,8 +89,8 @@ public final class BottomBar extends JPanel {
     public void setTableInfo(String name, int rows, int cols) {
         SwingUtilities.invokeLater(() -> {
             nameLabel.setText(name);
-            rowsLabel.setText("Rows: " + rows);
-            colsLabel.setText("Cols: " + cols);
+            rowsLabel.setText(Lang.get("status.rows_count", rows));
+            colsLabel.setText(Lang.get("status.cols_count", cols));
 
             nameLabel.setVisible(true);
             rowsLabel.setVisible(true);
@@ -98,19 +101,19 @@ public final class BottomBar extends JPanel {
     public void setColumnStats(Optional<String> min, Optional<String> max, Optional<String> avg, Optional<String> sum) {
         SwingUtilities.invokeLater(() -> {
             sum.ifPresentOrElse(value -> {
-                sumLabel.setText("Sum: " + value);
+                sumLabel.setText(Lang.get("status.sum", value));
                 sumLabel.setVisible(true);
             }, () -> sumLabel.setVisible(false));
             avg.ifPresentOrElse(value -> {
-                avgLabel.setText("Avg: " + value);
+                avgLabel.setText(Lang.get("status.avg", value));
                 avgLabel.setVisible(true);
             }, () -> avgLabel.setVisible(false));
             min.ifPresentOrElse(value -> {
-                minLabel.setText("Min: " + value);
+                minLabel.setText(Lang.get("status.min", value));
                 minLabel.setVisible(true);
             }, () -> minLabel.setVisible(false));
             max.ifPresentOrElse(value -> {
-                maxLabel.setText("Max: " + value);
+                maxLabel.setText(Lang.get("status.max", value));
                 maxLabel.setVisible(true);
             }, () -> maxLabel.setVisible(false));
         });

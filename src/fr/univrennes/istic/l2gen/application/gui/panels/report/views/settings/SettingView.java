@@ -46,7 +46,6 @@ public class SettingView extends JPanel {
 
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         content.add(buildSection("Chart", new JPanel[][] {
                 row("Type", dropdown(new String[] { "Pie", "Bar", "Columns" })),

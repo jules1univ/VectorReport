@@ -1,6 +1,7 @@
 package fr.univrennes.istic.l2gen.application.gui;
 
 import fr.univrennes.istic.l2gen.application.core.CoreApp;
+import fr.univrennes.istic.l2gen.application.core.lang.Lang;
 import fr.univrennes.istic.l2gen.application.core.services.TableService;
 import fr.univrennes.istic.l2gen.application.gui.main.MainView;
 
@@ -24,10 +25,9 @@ public final class GUIApp extends CoreApp<GUIController> {
     public void start() {
         if (!FlatLightLaf.setup()) {
             JOptionPane.showMessageDialog(null,
-                    "Application failed to initialize.",
-                    "Startup Error",
+                    Lang.get("error.initfl_message"),
+                    Lang.get("error.initfl_title"),
                     JOptionPane.ERROR_MESSAGE);
-            return;
         }
 
         int hour = LocalTime.now().getHour();
